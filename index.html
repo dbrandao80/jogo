@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>O Desafio dos Princípios</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React & ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Tailwind Config for Custom Colors/Shadows -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    boxShadow: {
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.05)',
+                        'float': '0 20px 40px -10px rgba(0,0,0,0.08)',
+                        'glow': '0 0 20px rgba(139, 92, 246, 0.3)',
+                    },
+                    animation: {
+                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scale-in': 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                    },
+                    keyframes: {
+                        slideUp: {
+                            '0%': { opacity: 0, transform: 'translateY(20px)' },
+                            '10%': { opacity: 1, transform: 'translateY(0)' },
+                        },
+                        scaleIn: {
+                            '0%': { opacity: 0, transform: 'scale(0.95)' },
+                            '100%': { opacity: 1, transform: 'scale(1)' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body {
+            background-color: #fafafa; /* ultra light gray */
+            color: #18181b; /* zinc-900 */
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+        
+        /* Premium custom scrollbar */
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: #e4e4e7; /* zinc-200 */
+            border-radius: 10px;
+        }
+        .custom-scrollbar:hover::-webkit-scrollbar-thumb {
+            background-color: #d4d4d8; /* zinc-300 */
+        }
+
+        /* Glass utilities */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-bottom: 1px solid rgba(0,0,0,0.03);
+        }
+
+        /* Input styling overrides */
+        .premium-input {
+            background-color: #f4f4f5;
+            border: 1px solid transparent;
+            transition: all 0.2s ease;
+        }
+        .premium-input:focus {
+            background-color: #ffffff;
+            border-color: #c4b5fd;
+            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+            outline: none;
+        }
+
+        /* Background Pattern */
+        .bg-pattern {
+            background-image: radial-gradient(#e4e4e7 1px, transparent 1px);
+            background-size: 24px 24px;
+        }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-violet-200 selection:text-violet-900">
+
+    <div id="root"></div>
+
+    <script type="text/babel">
+
+        const { useState, useEffect, useRef } = React;
+
+        // Generate unique IDs
+        const generateId = () => Math.random().toString(36).substr(2, 9);
+
+        const CATEGORIES = {
+            financas: { name: "Finanças, Trabalho e Bens Materiais", color: "bg-emerald-100 text-emerald-800 border-emerald-300", dot: "bg-emerald-500" },
+            mudancas: { name: "Mudanças e Decisões de Vida", color: "bg-zinc-200 text-zinc-800 border-zinc-400", dot: "bg-zinc-600" },
+            aparencia: { name: "Aparência e Estilo de Vida", color: "bg-stone-200 text-stone-800 border-stone-400", dot: "bg-stone-600" },
+            diversao: { name: "Diversão, Lazer e Entretenimento", color: "bg-rose-100 text-rose-800 border-rose-300", dot: "bg-rose-500" },
+            relacionamentos: { name: "Relacionamentos e Família", color: "bg-amber-100 text-amber-800 border-amber-300", dot: "bg-amber-500" },
+            tecnologia: { name: "Tecnologia e Redes Sociais", color: "bg-violet-100 text-violet-800 border-violet-300", dot: "bg-violet-500" },
+            espiritual: { name: "Vida Espiritual e Ministério", color: "bg-blue-100 text-blue-800 border-blue-300", dot: "bg-blue-500" },
+            saude: { name: "Saúde, Tempo e Equilíbrio", color: "bg-orange-100 text-orange-800 border-orange-300", dot: "bg-orange-500" }
+        };
+
+        const ALL_QUESTIONS = [
+            // Finanças (12)
+            { category: 'financas', text: "Devo comprar um carro zero?" },
+            { category: 'financas', text: "Devo fazer um empréstimo longo para viajar?" },
+            { category: 'financas', text: "Devo aceitar um emprego que paga muito mais, mas exige horas extras constantes?" },
+            { category: 'financas', text: "Devo investir minhas economias em um negócio de alto risco?" },
+            { category: 'financas', text: "Devo emprestar uma quantia alta de dinheiro a um parente?" },
+            { category: 'financas', text: "Devo usar cartão de crédito para comprar luxos que não posso pagar à vista?" },
+            { category: 'financas', text: "Devo assumir uma dívida grande para comprar uma casa maior?" },
+            { category: 'financas', text: "Devo me aposentar o mais cedo possível para focar no lazer?" },
+            { category: 'financas', text: "Devo processar um irmão da congregação por uma dívida não paga?" },
+            { category: 'financas', text: "Devo participar de um esquema de investimento que promete lucro rápido e fácil?" },
+            { category: 'financas', text: "Devo fazer apostas esportivas valendo dinheiro?" },
+            { category: 'financas', text: "Devo comprar itens de grife apenas para impressionar os outros?" },
+            // Mudanças (12)
+            { category: 'mudancas', text: "Devo mudar de cidade em busca de um estilo de vida melhor?" },
+            { category: 'mudancas', text: "Devo emigrar para outro país por motivos puramente econômicos?" },
+            { category: 'mudancas', text: "Devo trocar de profissão radicalmente após anos na mesma carreira?" },
+            { category: 'mudancas', text: "Devo voltar a estudar agora, mesmo exigindo muito tempo livre?" },
+            { category: 'mudancas', text: "Devo sair da casa dos meus pais antes do casamento?" },
+            { category: 'mudancas', text: "Devo vender minha casa própria e passar a morar de aluguel?" },
+            { category: 'mudancas', text: "Devo adotar um estilo de vida nômade (viajando constantemente)?" },
+            { category: 'mudancas', text: "Devo mudar meus filhos para uma escola que exige mais tempo da família?" },
+            { category: 'mudancas', text: "Devo comprar uma casa de campo em um local isolado?" },
+            { category: 'mudancas', text: "Devo aceitar uma promoção que me fará viajar o tempo todo?" },
+            { category: 'mudancas', text: "Devo me mudar para ficar mais perto dos meus pais idosos?" },
+            { category: 'mudancas', text: "Devo abandonar um emprego estável para abrir meu próprio negócio?" },
+            // Aparência (12)
+            { category: 'aparencia', text: "Devo fazer uma tatuagem?" },
+            { category: 'aparencia', text: "Devo seguir tendências de moda extremamente justas ou curtas?" },
+            { category: 'aparencia', text: "Devo fazer uma cirurgia plástica puramente estética?" },
+            { category: 'aparencia', text: "Devo pintar o cabelo de uma cor vibrante e chamativa?" },
+            { category: 'aparencia', text: "Devo deixar a barba crescer (em contextos onde não é tão comum)?" },
+            { category: 'aparencia', text: "Devo usar maquiagem pesada ou extravagante no dia a dia?" },
+            { category: 'aparencia', text: "Devo comprar apenas roupas de grifes famosas?" },
+            { category: 'aparencia', text: "Devo fazer procedimentos estéticos faciais (como aplicação de botox)?" },
+            { category: 'aparencia', text: "Devo usar múltiplos piercings?" },
+            { category: 'aparencia', text: "Devo adotar um corte de cabelo excêntrico?" },
+            { category: 'aparencia', text: "Devo adotar um estilo de vestuário minimalista extremo?" },
+            { category: 'aparencia', text: "Devo gastar uma parte significativa do meu orçamento em produtos de beleza?" },
+            // Diversão (12)
+            { category: 'diversao', text: "Devo assistir a filmes/séries com alta classificação indicativa de violência ou imoralidade?" },
+            { category: 'diversao', text: "Devo ir a uma festa com colegas de trabalho que não compartilham dos meus princípios?" },
+            { category: 'diversao', text: "Devo jogar videogames focados em violência intensa?" },
+            { category: 'diversao', text: "Devo participar de esportes radicais de alto risco?" },
+            { category: 'diversao', text: "Devo ir a um show de um artista conhecido por um estilo de vida imoral?" },
+            { category: 'diversao', text: "Devo celebrar costumes ou feriados com origens questionáveis de forma 'adaptada'?" },
+            { category: 'diversao', text: "Devo dedicar a maior parte do meu tempo livre a um hobby específico?" },
+            { category: 'diversao', text: "Devo consumir obras de fantasia que destacam magia e ocultismo?" },
+            { category: 'diversao', text: "Devo frequentar casas noturnas ou baladas seculares?" },
+            { category: 'diversao', text: "Devo assistir a reality shows focados em intrigas e brigas?" },
+            { category: 'diversao', text: "Devo praticar artes marciais de contato físico violento?" },
+            { category: 'diversao', text: "Devo gastar quantias altas de dinheiro em ingressos VIP para entretenimento?" },
+            // Relacionamentos (13)
+            { category: 'relacionamentos', text: "Devo namorar alguém que ainda não tem a mesma fé, mas está 'estudando'?" },
+            { category: 'relacionamentos', text: "Devo cortar contato definitivamente com um amigo que me ofendeu muito?" },
+            { category: 'relacionamentos', text: "Devo perdoar um familiar que repete o mesmo erro diversas vezes?" },
+            { category: 'relacionamentos', text: "Devo me casar muito jovem?" },
+            { category: 'relacionamentos', text: "Devo terminar um relacionamento longo por causa de dúvidas sobre compatibilidade?" },
+            { category: 'relacionamentos', text: "Devo convidar colegas de trabalho mundanos para minha festa de casamento?" },
+            { category: 'relacionamentos', text: "Devo confrontar diretamente alguém que está espalhando fofocas sobre mim?" },
+            { category: 'relacionamentos', text: "Devo manter amizades próximas com colegas de escola ou faculdade?" },
+            { category: 'relacionamentos', text: "Devo dar conselhos não solicitados a um amigo sobre as escolhas dele?" },
+            { category: 'relacionamentos', text: "Devo esconder um erro grave de um amigo para 'proteger' a reputação dele?" },
+            { category: 'relacionamentos', text: "Devo ter filhos neste exato momento da vida?" },
+            { category: 'relacionamentos', text: "Devo convidar um parente distante e problemático para morar temporariamente comigo?" },
+            { category: 'relacionamentos', text: "Devo gastar mais tempo com amigos do que com minha própria família?" },
+            // Tecnologia (13)
+            { category: 'tecnologia', text: "Devo ter um perfil público nas redes sociais e aceitar qualquer seguidor?" },
+            { category: 'tecnologia', text: "Devo dar um smartphone de última geração para meu filho criança?" },
+            { category: 'tecnologia', text: "Devo postar fotos frequentes exibindo posses materiais ou viagens luxuosas?" },
+            { category: 'tecnologia', text: "Devo debater política ou questões sociais polêmicas na internet?" },
+            { category: 'tecnologia', text: "Devo usar aplicativos de relacionamento?" },
+            { category: 'tecnologia', text: "Devo jogar online com microfone aberto com desconhecidos?" },
+            { category: 'tecnologia', text: "Devo seguir influenciadores que promovem um estilo de vida materialista?" },
+            { category: 'tecnologia', text: "Devo verificar mensagens de trabalho ou redes sociais durante reuniões congregacionais?" },
+            { category: 'tecnologia', text: "Devo repassar correntes de mensagens sem checar a veracidade das fontes?" },
+            { category: 'tecnologia', text: "Devo gastar horas 'rolando o feed' todos os dias?" },
+            { category: 'tecnologia', text: "Devo publicar detalhes íntimos ou rotineiros da minha vida familiar online?" },
+            { category: 'tecnologia', text: "Devo manter 'amizades' intensas de forma exclusivamente virtual?" },
+            { category: 'tecnologia', text: "Devo permitir que a televisão fique ligada como 'ruído de fundo' o dia todo?" },
+            // Espiritual (13)
+            { category: 'espiritual', text: "Devo iniciar o serviço de pioneiro regular agora?" },
+            { category: 'espiritual', text: "Devo me mudar para servir onde há maior necessidade?" },
+            { category: 'espiritual', text: "Devo aceitar uma designação na congregação mesmo me sentindo totalmente desqualificado?" },
+            { category: 'espiritual', text: "Devo pedir para mudar de congregação por causa de atritos com alguns irmãos?" },
+            { category: 'espiritual', text: "Devo focar mais no meu estudo pessoal profundo em vez de pregar mais horas?" },
+            { category: 'espiritual', text: "Devo doar recursos de forma anônima e contínua?" },
+            { category: 'espiritual', text: "Devo tentar comentar em todas as reuniões, mesmo lutando contra a timidez extrema?" },
+            { category: 'espiritual', text: "Devo começar a aprender um novo idioma para ajudar na pregação?" },
+            { category: 'espiritual', text: "Devo preencher uma petição para o serviço de Betel ou construção?" },
+            { category: 'espiritual', text: "Devo pregar de forma informal no meu ambiente de trabalho diário?" },
+            { category: 'espiritual', text: "Devo convidar vizinhos com os quais nunca conversei para eventos especiais?" },
+            { category: 'espiritual', text: "Devo buscar ativamente privilégios na congregação para ser visto como espiritual?" },
+            { category: 'espiritual', text: "Devo ser hospitaleiro organizando refeições para irmãos que não são meus amigos próximos?" },
+            // Saúde (13)
+            { category: 'saude', text: "Devo seguir dietas da moda rigorosas e não comprovadas pela medicina?" },
+            { category: 'saude', text: "Devo treinar na academia intensamente todos os dias, abdicando de descanso?" },
+            { category: 'saude', text: "Devo usar tratamentos médicos alternativos controversos?" },
+            { category: 'saude', text: "Devo aceitar um tratamento médico preventivo agressivo?" },
+            { category: 'saude', text: "Devo recusar tomar certos remédios com base em opiniões pessoais encontradas na internet?" },
+            { category: 'saude', text: "Devo gastar uma parte irrazoável da renda com suplementos nutricionais milagrosos?" },
+            { category: 'saude', text: "Devo dormir consideravelmente menos para produzir mais nos negócios?" },
+            { category: 'saude', text: "Devo priorizar a saúde física a ponto de perder reuniões congregacionais para ir à academia?" },
+            { category: 'saude', text: "Devo participar de desafios de redes sociais que testam a resistência física extrema?" },
+            { category: 'saude', text: "Devo tentar curar questões de saúde mental apenas com oração, ignorando tratamentos profissionais?" },
+            { category: 'saude', text: "Devo procurar terapia ou ajuda psiquiátrica para lidar com estresse prolongado?" },
+            { category: 'saude', text: "Devo ignorar conselhos diretos de médicos qualificados por discordar de seus métodos?" },
+            { category: 'saude', text: "Devo trabalhar estando nitidamente doente, correndo risco de contágio ou piora?" }
+        ];
+
+        const CategoryBadge = ({ categoryKey }) => {
+            if (!categoryKey || !CATEGORIES[categoryKey]) return (
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-zinc-100 text-zinc-500 border border-zinc-200 shadow-sm transition-all">
+                    <span class="w-2 h-2 rounded-full bg-zinc-400"></span> Personalizada
+                </span>
+            );
+            const cat = CATEGORIES[categoryKey];
+            return (
+                <span class={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm transition-all ${cat.color}`}>
+                    <span class={`w-2 h-2 rounded-full shadow-sm ${cat.dot}`}></span> {cat.name}
+                </span>
+            );
+        };
+
+        // Extracted Column Component
+        const Column = ({ title, colorClass, items, icon, getTeamName }) => {
+            // Map generic tailwind colors passed to specific modern hues
+            let bgStyle = "bg-white border-zinc-100";
+            let headerStyle = "text-zinc-500";
+            let pillStyle = "bg-zinc-100 text-zinc-600";
+            
+            if (colorClass.includes('emerald')) {
+                bgStyle = "bg-emerald-50/50 border-emerald-100";
+                headerStyle = "text-emerald-700";
+                pillStyle = "bg-emerald-100 text-emerald-800";
+            } else if (colorClass.includes('amber')) {
+                bgStyle = "bg-amber-50/50 border-amber-100";
+                headerStyle = "text-amber-700";
+                pillStyle = "bg-amber-100 text-amber-800";
+            } else if (colorClass.includes('rose')) {
+                bgStyle = "bg-rose-50/50 border-rose-100";
+                headerStyle = "text-rose-700";
+                pillStyle = "bg-rose-100 text-rose-800";
+            }
+
+            return (
+                <div class={`flex-1 min-w-[260px] rounded-3xl p-5 flex flex-col max-h-[65vh] border overflow-hidden shadow-soft ${bgStyle}`}>
+                    <div class="flex items-center justify-between mb-5">
+                        <h3 class={`font-bold flex items-center gap-2 text-sm tracking-wide uppercase ${headerStyle}`}>
+                            <i class={`fa-solid ${icon}`}></i> {title}
+                        </h3>
+                        <span class={`text-xs font-bold px-2 py-1 rounded-full ${pillStyle}`}>
+                            {items.length}
+                        </span>
+                    </div>
+                    
+                    <div class="space-y-3 overflow-y-auto custom-scrollbar pr-2 pb-4 flex-1">
+                        {items.length === 0 && (
+                            <div class="h-full flex items-center justify-center opacity-40 text-sm font-medium border-2 border-dashed border-current rounded-2xl">
+                                Área vazia
+                            </div>
+                        )}
+                        {items.map(p => (
+                            <div key={p.id} class="bg-white p-4 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-zinc-100 relative group animate-slide-up hover:border-zinc-300 transition-colors">
+                                <p class="font-medium text-zinc-800 text-sm leading-relaxed mb-2">{p.text}</p>
+                                {p.scripture && <p class="text-[11px] font-bold text-violet-600 mb-1 inline-flex items-center gap-1"><i class="fa-solid fa-book-open opacity-50"></i> {p.scripture}</p>}
+                                <div class="text-[10px] text-zinc-400 mt-2 font-medium tracking-wide uppercase">
+                                    Por {getTeamName(p.teamId)}
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const App = () => {
+            // Game States: 'intro', 'setup_teams', 'setup_question', 'brainstorm', 'sorting', 'top3', 'result'
+            const [gameState, setGameState] = useState('intro');
+            const [teams, setTeams] = useState([{ id: generateId(), name: 'Equipe 1' }, { id: generateId(), name: 'Equipe 2' }]);
+            const [currentQuestion, setCurrentQuestion] = useState('');
+            const [currentCategory, setCurrentCategory] = useState(null);
+            const [availableQuestions, setAvailableQuestions] = useState([...ALL_QUESTIONS]);
+            const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+            const [questionInputMode, setQuestionInputMode] = useState('draw');
+            const [principles, setPrinciples] = useState([]); // { id, text, scripture, teamId, category: 'pool'|'sim'|'nao'|'depende', isTop3: false }
+            const [timer, setTimer] = useState(180); // 3 minutes default
+            const [isTimerRunning, setIsTimerRunning] = useState(false);
+            const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
+            const [activePrinciple, setActivePrinciple] = useState(null);
+
+            // Brainstorm form states
+            const [principleText, setPrincipleText] = useState('');
+            const [scriptureText, setScriptureText] = useState('');
+            const [selectedTeamId, setSelectedTeamId] = useState('');
+
+            // Error/Message state instead of alert()
+            const [message, setMessage] = useState(null);
+
+            const showMessage = (msg, type = 'error') => {
+                setMessage({ text: msg, type });
+                setTimeout(() => setMessage(null), 3000);
+            };
+
+            useEffect(() => {
+                let interval = null;
+                if (isTimerRunning && timer > 0) {
+                    interval = setInterval(() => {
+                        setTimer(seconds => seconds - 1);
+                    }, 1000);
+                } else if (timer === 0) {
+                    setIsTimerRunning(false);
+                }
+                return () => clearInterval(interval);
+            }, [isTimerRunning, timer]);
+
+            const formatTime = (seconds) => {
+                const m = Math.floor(seconds / 60);
+                const s = seconds % 60;
+                return `${m}:${s < 10 ? '0' : ''}${s}`;
+            };
+
+            const renderIntro = () => (
+                <div class="relative flex flex-col items-center justify-center min-h-screen p-4 text-center overflow-hidden bg-pattern">
+                    {/* Decorative blurred blobs */}
+                    <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-violet-200/50 blur-[100px] pointer-events-none"></div>
+                    <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-100/50 blur-[100px] pointer-events-none"></div>
+
+                    <div class="relative max-w-2xl w-full bg-white/70 backdrop-blur-2xl p-10 md:p-14 rounded-[2.5rem] shadow-soft border border-white">
+                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 mb-8 shadow-sm">
+                            <i class="fa-solid fa-scale-balanced text-4xl"></i>
+                        </div>
+                        <h1 class="text-4xl md:text-5xl font-extrabold text-zinc-900 mb-6 tracking-tight">O Desafio dos Princípios</h1>
+                        
+                        <p class="text-lg md:text-xl text-zinc-500 mb-10 leading-relaxed font-light">
+                            No dia a dia, enfrentamos muitas decisões. Este desafio convida você a refletir sobre princípios bíblicos de forma descontraída, afiando seu discernimento.
+                        </p>
+                        
+                        <button 
+                            onClick={() => setGameState('setup_teams')}
+                            class="group relative inline-flex items-center justify-center bg-zinc-900 text-white font-medium py-4 px-12 rounded-full text-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-float active:scale-95"
+                        >
+                            <span class="relative z-10 flex items-center gap-3">
+                                Começar Jogo <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
+                            </span>
+                            <div class="absolute inset-0 bg-violet-600 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-in-out z-0"></div>
+                        </button>
+                    </div>
+                </div>
+            );
+
+            const renderSetupTeams = () => {
+                const addTeam = () => {
+                    if (teams.length >= 6) {
+                        showMessage("Máximo de 6 equipes atingido.");
+                        return;
+                    }
+                    setTeams([...teams, { id: generateId(), name: `Equipe ${teams.length + 1}` }]);
+                };
+
+                const updateTeamName = (id, newName) => {
+                    setTeams(teams.map(t => t.id === id ? { ...t, name: newName } : t));
+                };
+
+                const removeTeam = (id) => {
+                    if (teams.length <= 2) {
+                        showMessage("Mínimo de 2 equipes necessário.");
+                        return;
+                    }
+                    setTeams(teams.filter(t => t.id !== id));
+                };
+
+                return (
+                    <div class="flex flex-col items-center py-16 px-4 min-h-screen bg-zinc-50">
+                        <div class="w-full max-w-lg bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 md:p-10 animate-slide-up">
+                            <div class="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center text-zinc-600 mb-6">
+                                <i class="fa-solid fa-users-viewfinder text-xl"></i>
+                            </div>
+                            <h2 class="text-3xl font-bold mb-2 tracking-tight text-zinc-900">Jogadores</h2>
+                            <p class="text-zinc-500 mb-8 text-sm font-medium">Quem vai participar deste desafio hoje?</p>
+                            
+                            <div class="space-y-4 mb-8">
+                                {teams.map((team, index) => (
+                                    <div key={team.id} class="flex items-center gap-3 group">
+                                        <div class="w-10 h-10 rounded-2xl bg-zinc-100 text-zinc-400 font-bold flex items-center justify-center shrink-0 text-sm transition-colors group-focus-within:bg-violet-100 group-focus-within:text-violet-600">
+                                            {index + 1}
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            value={team.name}
+                                            onChange={(e) => updateTeamName(team.id, e.target.value)}
+                                            class="premium-input flex-1 rounded-2xl px-5 py-3 font-medium text-zinc-800 placeholder-zinc-400"
+                                            placeholder="Nome do jogador/equipe"
+                                        />
+                                        <button onClick={() => removeTeam(team.id)} class="w-10 h-10 flex items-center justify-center text-zinc-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all" title="Remover">
+                                            <i class="fa-solid fa-xmark"></i>
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                            
+                            <div class="flex flex-col gap-4 pt-6 border-t border-zinc-100 mt-2">
+                                <button onClick={addTeam} class="w-full py-4 text-sm font-semibold text-zinc-500 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 rounded-2xl transition-colors flex items-center justify-center gap-2">
+                                    <i class="fa-solid fa-plus text-xs"></i> Adicionar Participante
+                                </button>
+                                
+                                <button 
+                                    onClick={() => {
+                                        if (teams.some(t => t.name.trim() === '')) {
+                                            showMessage("Preencha todos os nomes das equipes.");
+                                            return;
+                                        }
+                                        setGameState('setup_question');
+                                    }}
+                                    class="w-full bg-zinc-900 hover:bg-zinc-800 text-white px-6 py-4 rounded-2xl font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md"
+                                >
+                                    Avançar <i class="fa-solid fa-arrow-right"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderSetupQuestion = () => {
+                const handleDrawQuestion = () => {
+                    let pool = availableQuestions;
+                    
+                    if (selectedCategoryFilter !== 'all') {
+                        pool = pool.filter(q => q.category === selectedCategoryFilter);
+                    }
+
+                    if (pool.length === 0) {
+                        // Restore questions to the pool
+                        const missingQuestions = ALL_QUESTIONS.filter(q => 
+                            selectedCategoryFilter === 'all' || q.category === selectedCategoryFilter
+                        );
+                        
+                        const currentTexts = new Set(availableQuestions.map(q => q.text));
+                        const newAvailable = [...availableQuestions, ...missingQuestions.filter(q => !currentTexts.has(q.text))];
+                        
+                        setAvailableQuestions(newAvailable);
+                        pool = missingQuestions;
+                        
+                        showMessage(
+                            selectedCategoryFilter === 'all' 
+                            ? "Todas as perguntas foram sorteadas! A lista foi reiniciada." 
+                            : "Todas as perguntas deste assunto foram sorteadas! A lista foi reiniciada.", 
+                            "info"
+                        );
+                    }
+                    
+                    const randomIndex = Math.floor(Math.random() * pool.length);
+                    const drawn = pool[randomIndex];
+                    
+                    setCurrentQuestion(drawn.text);
+                    setCurrentCategory(drawn.category);
+                    
+                    // Remove drawn from available list safely using functional state update
+                    setAvailableQuestions(prev => prev.filter(q => q.text !== drawn.text));
+                };
+
+                return (
+                    <div class="flex flex-col items-center py-12 px-4 min-h-screen bg-zinc-50">
+                        <div class="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 md:p-10 animate-slide-up">
+                            
+                            <div class="flex justify-between items-start mb-8">
+                                <div>
+                                    <h2 class="text-3xl font-bold mb-2 tracking-tight text-zinc-900">A Grande Pergunta</h2>
+                                    <p class="text-zinc-500 font-medium">Sorteie uma situação ou digite a sua própria decisão.</p>
+                                </div>
+                                <div class="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-violet-600 shrink-0">
+                                    <i class="fa-solid fa-compass text-xl"></i>
+                                </div>
+                            </div>
+                            
+                            {/* Toggle Tabs */}
+                            <div class="flex bg-zinc-100 p-1.5 rounded-2xl mb-8">
+                                <button 
+                                    onClick={() => setQuestionInputMode('draw')}
+                                    class={`flex-1 py-3 px-4 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${questionInputMode === 'draw' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700'}`}
+                                >
+                                    <i class="fa-solid fa-dice"></i> Sortear
+                                </button>
+                                <button 
+                                    onClick={() => setQuestionInputMode('custom')}
+                                    class={`flex-1 py-3 px-4 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${questionInputMode === 'custom' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700'}`}
+                                >
+                                    <i class="fa-solid fa-pen"></i> Escrever Própria
+                                </button>
+                            </div>
+                            
+                            {questionInputMode === 'draw' && (
+                                <div class="animate-scale-in">
+                                    {/* Filter by Category */}
+                                    <div class="mb-6 w-full">
+                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 pl-1 text-center md:text-left">Filtrar por Assunto</label>
+                                        <div class="relative">
+                                            <select 
+                                                value={selectedCategoryFilter}
+                                                onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                                                class="premium-input w-full appearance-none rounded-2xl p-4 font-semibold text-zinc-800 cursor-pointer text-center md:text-left md:pl-6"
+                                            >
+                                                <option value="all">🎲 Todos os Assuntos</option>
+                                                {Object.entries(CATEGORIES).map(([key, cat]) => (
+                                                    <option key={key} value={key}>{cat.name}</option>
+                                                ))}
+                                            </select>
+                                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Draw Button */}
+                                    <button 
+                                        onClick={handleDrawQuestion}
+                                        class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white p-6 rounded-3xl shadow-float transition-all hover:-translate-y-1 active:scale-95 group relative overflow-hidden mb-6"
+                                    >
+                                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
+                                        <div class="relative z-10 flex flex-col items-center justify-center gap-2">
+                                            <i class="fa-solid fa-dice text-3xl mb-1 group-hover:animate-bounce"></i>
+                                            <span class="text-lg font-bold tracking-wide">Sortear Pergunta Aleatória</span>
+                                        </div>
+                                    </button>
+
+                                    {currentQuestion.length > 0 && (
+                                        <div class="bg-violet-50/50 border border-violet-100 rounded-3xl p-6 text-center animate-slide-up">
+                                            <div class="flex justify-center mb-4">
+                                                <CategoryBadge categoryKey={currentCategory} />
+                                            </div>
+                                            <p class="text-xl md:text-2xl font-semibold text-zinc-800">{currentQuestion}</p>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+
+                            {questionInputMode === 'custom' && (
+                                <div class="animate-scale-in">
+                                    <div class="relative group">
+                                        <textarea 
+                                            value={currentQuestion}
+                                            onChange={(e) => {
+                                                setCurrentQuestion(e.target.value);
+                                                setCurrentCategory(null);
+                                            }}
+                                            class="premium-input w-full rounded-3xl p-6 text-xl md:text-2xl font-semibold text-zinc-800 text-center resize-none min-h-[180px]"
+                                            placeholder="Ex: Devo mudar de emprego?"
+                                        ></textarea>
+                                        {currentQuestion.length === 0 && (
+                                            <div class="absolute inset-0 pointer-events-none rounded-3xl border-2 border-dashed border-zinc-200 group-hover:border-violet-300 transition-colors"></div>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
+                            <div class="flex justify-between items-center mt-12 pt-6 border-t border-zinc-100">
+                                <button onClick={() => setGameState('setup_teams')} class="text-zinc-400 hover:text-zinc-800 px-4 py-2 font-medium transition-colors">
+                                    <i class="fa-solid fa-arrow-left mr-2 text-sm"></i> Voltar
+                                </button>
+                                <button 
+                                    onClick={() => {
+                                        if (currentQuestion.trim().length < 5) {
+                                            showMessage("Por favor, insira ou sorteie uma pergunta válida.");
+                                            return;
+                                        }
+                                        setTimer(180);
+                                        setSelectedTeamId(teams[0].id);
+                                        setGameState('brainstorm');
+                                    }}
+                                    class="bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-md flex items-center gap-3"
+                                >
+                                    Iniciar Reflexão <i class="fa-solid fa-play text-sm"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderBrainstorm = () => {
+                const currentSelectedTeam = selectedTeamId || (teams.length > 0 ? teams[0].id : '');
+
+                const handleAddPrinciple = (e) => {
+                    e.preventDefault();
+                    if (!principleText.trim()) {
+                        showMessage("O texto do princípio é obrigatório.");
+                        return;
+                    }
+                    
+                    const newPrinciple = {
+                        id: generateId(),
+                        text: principleText,
+                        scripture: scriptureText,
+                        teamId: currentSelectedTeam,
+                        category: 'pool',
+                        isTop3: false
+                    };
+                    
+                    setPrinciples([...principles, newPrinciple]);
+                    setPrincipleText('');
+                    setScriptureText('');
+                    
+                    const currentIndex = teams.findIndex(t => t.id === currentSelectedTeam);
+                    const nextIndex = (currentIndex + 1) % teams.length;
+                    setSelectedTeamId(teams[nextIndex].id);
+                };
+
+                return (
+                    <div class="flex flex-col min-h-screen bg-zinc-50 pb-10">
+                        {/* Sticky Header */}
+                        <div class="glass-header sticky top-0 z-30 px-6 py-4">
+                            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
+                                <div class="flex-1 min-w-0 flex flex-col items-start justify-center gap-1.5">
+                                    <CategoryBadge categoryKey={currentCategory} />
+                                    <h2 class="text-lg font-bold text-zinc-800 truncate w-full" title={currentQuestion}>{currentQuestion}</h2>
+                                </div>
+                                
+                                {/* Timer Pill */}
+                                <div class="flex items-center bg-white border border-zinc-200 rounded-full p-1.5 pr-5 shadow-sm">
+                                    <button 
+                                        onClick={() => setIsTimerRunning(!isTimerRunning)}
+                                        class={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isTimerRunning ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
+                                    >
+                                        <i class={`fa-solid ${isTimerRunning ? 'fa-pause' : 'fa-play'} text-sm`}></i>
+                                    </button>
+                                    <div class="pl-4 flex items-center gap-2">
+                                        <div class={`w-2 h-2 rounded-full ${isTimerRunning ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-300'}`}></div>
+                                        <span class={`font-mono text-xl font-bold tracking-tight ${timer < 30 ? 'text-rose-500' : 'text-zinc-800'}`}>
+                                            {formatTime(timer)}
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start mt-4">
+                            
+                            {/* Input Form Column */}
+                            <div class="flex-1 w-full bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 md:p-10 animate-slide-up">
+                                <h3 class="text-2xl font-bold mb-8 text-zinc-900 tracking-tight">Novo Princípio</h3>
+                                
+                                <form onSubmit={handleAddPrinciple} class="space-y-6">
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Vez de</label>
+                                        <div class="relative">
+                                            <select 
+                                                value={currentSelectedTeam} 
+                                                onChange={(e) => setSelectedTeamId(e.target.value)}
+                                                class="premium-input w-full appearance-none rounded-2xl p-4 font-semibold text-zinc-800 cursor-pointer"
+                                            >
+                                                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                            </select>
+                                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                                                <i class="fa-solid fa-chevron-down text-sm"></i>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">O que a Bíblia ensina?</label>
+                                        <textarea 
+                                            value={principleText}
+                                            onChange={(e) => setPrincipleText(e.target.value)}
+                                            class="premium-input w-full rounded-2xl p-4 font-medium text-zinc-800 resize-none min-h-[120px]"
+                                            placeholder="Ex: Más companhias estragam bons hábitos."
+                                        ></textarea>
+                                    </div>
+
+                                    <div class="space-y-2">
+                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Texto Bíblico (Opcional)</label>
+                                        <input 
+                                            type="text"
+                                            value={scriptureText}
+                                            onChange={(e) => setScriptureText(e.target.value)}
+                                            class="premium-input w-full rounded-2xl p-4 font-medium text-zinc-800"
+                                            placeholder="Ex: 1 Coríntios 15:33"
+                                        />
+                                    </div>
+
+                                    <button type="submit" class="w-full bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white font-bold py-4 rounded-2xl transition-all active:scale-95 mt-4 border border-violet-100 hover:border-violet-600">
+                                        Adicionar à Pilha
+                                    </button>
+                                </form>
+                            </div>
+
+                            {/* Status Column */}
+                            <div class="w-full lg:w-[320px] shrink-0 space-y-6">
+                                {/* Counter Widget */}
+                                <div class="bg-zinc-900 rounded-[2.5rem] shadow-float p-8 text-center text-white relative overflow-hidden">
+                                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+                                    <div class="text-[5rem] font-black tracking-tighter leading-none mb-2">{principles.length}</div>
+                                    <div class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Princípios na Pilha</div>
+                                </div>
+                                
+                                {/* Action Widget */}
+                                <div class="bg-white rounded-[2rem] shadow-soft border border-zinc-100 p-6 text-center">
+                                    <div class="w-10 h-10 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-400 mx-auto mb-4">
+                                        <i class="fa-solid fa-layer-group"></i>
+                                    </div>
+                                    <p class="text-sm text-zinc-500 mb-6 font-medium leading-relaxed">Pensem na maior quantidade possível de princípios relacionados.</p>
+                                    <button 
+                                        onClick={() => {
+                                            if(principles.length === 0) {
+                                                showMessage("Adicione pelo menos um princípio para continuar.", "warning");
+                                                return;
+                                            }
+                                            setIsTimerRunning(false);
+                                            setGameState('sorting');
+                                        }}
+                                        class="w-full bg-white border-2 border-zinc-200 hover:border-zinc-900 text-zinc-900 font-bold py-3 px-4 rounded-2xl transition-all active:scale-95"
+                                    >
+                                        Classificar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderSorting = () => {
+                const pool = principles.filter(p => p.category === 'pool');
+                const sim = principles.filter(p => p.category === 'sim');
+                const nao = principles.filter(p => p.category === 'nao');
+                const depende = principles.filter(p => p.category === 'depende');
+
+                const currentTeam = teams[currentTurnIndex];
+
+                const drawNextPrinciple = () => {
+                    if (pool.length > 0) {
+                        const randomIndex = Math.floor(Math.random() * pool.length);
+                        setActivePrinciple(pool[randomIndex]);
+                    }
+                };
+
+                const categorizeActive = (category) => {
+                    if (!activePrinciple) return;
+                    setPrinciples(principles.map(p => 
+                        p.id === activePrinciple.id ? { ...p, category: category } : p
+                    ));
+                    setActivePrinciple(null);
+                    setCurrentTurnIndex((currentTurnIndex + 1) % teams.length);
+                };
+
+                const getTeamName = (id) => teams.find(t => t.id === id)?.name || 'Desconhecido';
+
+                return (
+                    <div class="flex flex-col min-h-screen bg-zinc-50">
+                        {/* Header */}
+                        <div class="glass-header sticky top-0 z-10 px-4 py-4 flex flex-col items-center border-b border-zinc-200 gap-2">
+                            <CategoryBadge categoryKey={currentCategory} />
+                            <h2 class="text-lg md:text-xl font-bold text-zinc-800 text-center max-w-3xl line-clamp-1" title={currentQuestion}>{currentQuestion}</h2>
+                        </div>
+
+                        {/* Main Board */}
+                        <div class="flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 max-w-[1400px] mx-auto w-full h-full">
+                            
+                            {/* Action Area */}
+                            <div class="w-full lg:w-[400px] flex flex-col gap-4">
+                                {/* Card Area */}
+                                <div class="flex-1 bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 flex flex-col items-center justify-center min-h-[400px] relative">
+                                    
+                                    {!activePrinciple && pool.length > 0 && (
+                                        <div class="text-center flex flex-col items-center h-full justify-center w-full animate-scale-in">
+                                            {/* Beautiful CSS Deck */}
+                                            <div class="relative mb-10 w-36 h-48 cursor-pointer group" onClick={drawNextPrinciple}>
+                                                <div class="absolute inset-0 bg-white border border-zinc-200 rounded-2xl shadow-sm rotate-6 group-hover:rotate-12 transition-transform duration-500 origin-bottom-right"></div>
+                                                <div class="absolute inset-0 bg-white border border-zinc-200 rounded-2xl shadow-sm -rotate-3 group-hover:-rotate-6 transition-transform duration-500 origin-bottom-left"></div>
+                                                <div class="absolute inset-0 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-float flex flex-col items-center justify-center text-white transition-transform duration-300 group-hover:-translate-y-4">
+                                                    <i class="fa-brands fa-buffer text-4xl mb-2 opacity-80"></i>
+                                                    <span class="text-sm font-bold opacity-50 uppercase tracking-widest text-[10px]">Comprar</span>
+                                                </div>
+                                            </div>
+                                            <p class="text-zinc-400 font-bold text-sm uppercase tracking-widest mb-6">Restam {pool.length}</p>
+                                            <button 
+                                                onClick={drawNextPrinciple}
+                                                class="bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold py-4 px-8 rounded-full transition-all active:scale-95 w-full text-sm shadow-sm"
+                                            >
+                                                Revelar Próximo
+                                            </button>
+                                        </div>
+                                    )}
+
+                                    {activePrinciple && (
+                                        <div class="w-full h-full flex flex-col animate-slide-up">
+                                            <div class="flex-1 relative">
+                                                {/* Active Card Styling */}
+                                                <div class="absolute inset-0 bg-white border-2 border-violet-100 shadow-[0_20px_50px_-12px_rgba(139,92,246,0.15)] rounded-3xl p-8 flex flex-col justify-center">
+                                                    <div class="absolute top-6 left-6 text-violet-200 text-4xl opacity-50">
+                                                        <i class="fa-solid fa-quote-left"></i>
+                                                    </div>
+                                                    <p class="text-xl lg:text-2xl font-semibold text-zinc-800 text-center mb-6 leading-tight relative z-10">
+                                                        {activePrinciple.text}
+                                                    </p>
+                                                    {activePrinciple.scripture && (
+                                                        <div class="bg-violet-50 text-violet-700 py-2 px-4 rounded-xl text-center font-bold text-sm mx-auto shadow-sm">
+                                                            {activePrinciple.scripture}
+                                                        </div>
+                                                    )}
+                                                    <div class="absolute bottom-6 left-0 w-full text-center text-[10px] uppercase font-bold tracking-widest text-zinc-300">
+                                                        Por {getTeamName(activePrinciple.teamId)}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            
+                                            <div class="mt-8 pt-6 border-t border-zinc-100">
+                                                <p class="text-center text-[10px] font-bold text-zinc-400 mb-4 uppercase tracking-widest">Decisão de Destino</p>
+                                                <div class="grid grid-cols-3 gap-3">
+                                                    <button onClick={() => categorizeActive('sim')} class="group relative overflow-hidden bg-white border border-emerald-200 hover:border-emerald-500 text-emerald-700 py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
+                                                        <div class="absolute inset-0 bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                        <i class="fa-solid fa-check text-xl relative z-10"></i>
+                                                        <span class="text-xs relative z-10">Sim</span>
+                                                    </button>
+                                                    <button onClick={() => categorizeActive('depende')} class="group relative overflow-hidden bg-white border border-amber-200 hover:border-amber-500 text-amber-700 py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
+                                                        <div class="absolute inset-0 bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                        <i class="fa-solid fa-scale-unbalanced text-xl relative z-10"></i>
+                                                        <span class="text-xs relative z-10">Depende</span>
+                                                    </button>
+                                                    <button onClick={() => categorizeActive('nao')} class="group relative overflow-hidden bg-white border border-rose-200 hover:border-rose-500 text-rose-700 py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
+                                                        <div class="absolute inset-0 bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                                                        <i class="fa-solid fa-xmark text-xl relative z-10"></i>
+                                                        <span class="text-xs relative z-10">Não</span>
+                                                    </button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {!activePrinciple && pool.length === 0 && (
+                                        <div class="text-center flex flex-col items-center justify-center h-full animate-scale-in">
+                                            <div class="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-4xl mb-6 shadow-sm border border-emerald-100">
+                                                <i class="fa-solid fa-check"></i>
+                                            </div>
+                                            <h3 class="text-2xl font-bold text-zinc-900 mb-2">Concluído!</h3>
+                                            <p class="text-zinc-500 mb-8 font-medium">Todos os princípios foram alocados.</p>
+                                            <button 
+                                                onClick={() => setGameState('top3')}
+                                                class="bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-4 px-8 rounded-full shadow-float transition-all active:scale-95 w-full flex items-center justify-center gap-2"
+                                            >
+                                                Ver Decisivos <i class="fa-solid fa-arrow-right"></i>
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Sorted Columns Area */}
+                            <div class="flex-1 flex gap-4 overflow-x-auto pb-4">
+                                <Column title="Sim" items={sim} colorClass="emerald" icon="fa-check text-emerald-500" getTeamName={getTeamName} />
+                                <Column title="Depende" items={depende} colorClass="amber" icon="fa-scale-unbalanced text-amber-500" getTeamName={getTeamName} />
+                                <Column title="Não" items={nao} colorClass="rose" icon="fa-xmark text-rose-500" getTeamName={getTeamName} />
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderTop3 = () => {
+                const sortedPrinciples = principles.filter(p => p.category !== 'pool');
+                const top3Count = principles.filter(p => p.isTop3).length;
+
+                const toggleTop3 = (id) => {
+                    const principle = principles.find(p => p.id === id);
+                    if (!principle.isTop3 && top3Count >= 3) {
+                        showMessage("Máximo de 3 princípios alcançado.", "warning");
+                        return;
+                    }
+                    setPrinciples(principles.map(p => 
+                        p.id === id ? { ...p, isTop3: !p.isTop3 } : p
+                    ));
+                };
+
+                // Premium Dark Mode aesthetic just for this view
+                return (
+                    <div class="min-h-screen bg-zinc-950 flex flex-col py-10 px-4 text-zinc-100 selection:bg-zinc-700 font-sans">
+                        <div class="max-w-6xl mx-auto w-full flex-1 flex flex-col">
+                            
+                            <div class="text-center mb-10 animate-slide-up">
+                                <h2 class="text-4xl font-extrabold mb-3 tracking-tight text-white">Área Prata</h2>
+                                <p class="text-zinc-400 font-medium max-w-xl mx-auto">Dos princípios classificados, escolha os 3 que possuem o maior peso e fornecem a melhor direção.</p>
+                                <div class="mt-6 inline-flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-full px-5 py-2">
+                                    <span class="font-mono font-bold text-lg text-white">{top3Count}</span>
+                                    <span class="text-xs font-bold text-zinc-500 uppercase tracking-widest border-l border-zinc-700 pl-3">de 3 Selecionados</span>
+                                </div>
+                            </div>
+
+                            <div class="flex-1 flex flex-col lg:flex-row gap-8 overflow-hidden h-full">
+                                
+                                {/* Pool of Sorted */}
+                                <div class="flex-1 bg-zinc-900/50 rounded-[2.5rem] p-6 lg:p-8 overflow-y-auto custom-scrollbar border border-zinc-800 flex flex-col">
+                                    <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-6 px-2">Princípios Analisados</h3>
+                                    <div class="grid gap-3 flex-1">
+                                        {sortedPrinciples.map(p => {
+                                            const isSelected = p.isTop3;
+                                            // subtle color hints
+                                            let catColor = 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700/50';
+                                            if (p.category === 'sim') catColor = 'bg-emerald-900/20 hover:bg-emerald-900/40 border-emerald-900/30';
+                                            if (p.category === 'nao') catColor = 'bg-rose-900/20 hover:bg-rose-900/40 border-rose-900/30';
+                                            if (p.category === 'depende') catColor = 'bg-amber-900/20 hover:bg-amber-900/40 border-amber-900/30';
+
+                                            return (
+                                                <div 
+                                                    key={p.id} 
+                                                    onClick={() => toggleTop3(p.id)}
+                                                    class={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 
+                                                        ${isSelected ? 'opacity-40 scale-[0.98] grayscale border-transparent bg-zinc-900' : `${catColor} shadow-md`}`}
+                                                >
+                                                    <div class="flex-1 min-w-0">
+                                                        <p class="font-medium text-sm leading-relaxed text-zinc-200">{p.text}</p>
+                                                        {p.scripture && <p class="text-xs text-zinc-500 font-bold mt-2"><i class="fa-solid fa-book-open text-[10px] mr-1 opacity-70"></i>{p.scripture}</p>}
+                                                    </div>
+                                                    <div class={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
+                                                        ${isSelected ? 'border-zinc-500 bg-zinc-500 text-zinc-900' : 'border-zinc-600'}`}
+                                                    >
+                                                        {isSelected && <i class="fa-solid fa-check text-xs"></i>}
+                                                    </div>
+                                                </div>
+                                            );
+                                        })}
+                                    </div>
+                                </div>
+
+                                {/* Premium Silver Area Display */}
+                                <div class="flex-1 flex flex-col gap-6">
+                                    <div class="relative overflow-hidden bg-gradient-to-br from-zinc-200 via-zinc-300 to-zinc-400 rounded-[2.5rem] p-8 lg:p-10 shadow-[0_20px_50px_-12px_rgba(255,255,255,0.1)] flex-1 flex flex-col">
+                                        
+                                        {/* Metallic Shine effect */}
+                                        <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_3s_infinite]"></div>
+                                        <style>{`@keyframes shimmer { 100% { transform: translateX(100%); } }`}</style>
+                                        
+                                        <div class="absolute top-6 right-6 text-zinc-500/20 text-7xl drop-shadow-md">
+                                            <i class="fa-solid fa-trophy"></i>
+                                        </div>
+
+                                        <div class="relative z-10 flex flex-col h-full">
+                                            <h3 class="text-sm font-bold mb-8 text-zinc-600 uppercase tracking-widest border-b border-zinc-400/30 pb-4">
+                                                Fatores Decisivos
+                                            </h3>
+                                            
+                                            <div class="flex-1 flex flex-col gap-4 justify-center">
+                                                {principles.filter(p => p.isTop3).length === 0 && (
+                                                    <div class="text-center flex flex-col items-center justify-center h-full">
+                                                        <div class="w-16 h-16 border-2 border-dashed border-zinc-400 rounded-full flex items-center justify-center mb-4 text-zinc-400">
+                                                            <i class="fa-solid fa-plus text-xl"></i>
+                                                        </div>
+                                                        <p class="text-zinc-600 font-medium text-sm">Selecione ao lado os princípios mais importantes.</p>
+                                                    </div>
+                                                )}
+                                                
+                                                {principles.filter(p => p.isTop3).map((p, idx) => (
+                                                    <div key={p.id} class="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-white/50 flex gap-4 items-start animate-slide-up hover:scale-[1.02] transition-transform">
+                                                        <div class="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm mt-0.5">
+                                                            {idx + 1}
+                                                        </div>
+                                                        <div>
+                                                            <p class="font-bold text-zinc-800 text-sm md:text-base leading-snug mb-1">{p.text}</p>
+                                                            {p.scripture && <p class="text-[11px] font-bold text-zinc-500 uppercase tracking-wide">{p.scripture}</p>}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={() => setGameState('result')}
+                                        disabled={top3Count === 0}
+                                        class={`py-5 rounded-full font-bold text-lg transition-all flex justify-center items-center gap-2
+                                            ${top3Count > 0 ? 'bg-white text-zinc-900 hover:bg-zinc-100 shadow-glow active:scale-95' : 'bg-zinc-900 text-zinc-600 cursor-not-allowed border border-zinc-800'}`}
+                                    >
+                                        Finalizar Reflexão <i class="fa-solid fa-flag-checkered text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
+
+            const renderResult = () => {
+                const top3 = principles.filter(p => p.isTop3);
+                const getTeamName = (id) => teams.find(t => t.id === id)?.name || 'Desconhecido';
+                
+                return (
+                    <div class="min-h-screen bg-zinc-50 py-16 px-4 flex flex-col items-center justify-center bg-pattern">
+                        <div class="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-float overflow-hidden border border-zinc-100 animate-slide-up">
+                            
+                            {/* Header / Report Look */}
+                            <div class="bg-zinc-900 p-10 text-center text-white relative overflow-hidden">
+                                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+                                <div class="relative z-10 flex flex-col items-center">
+                                    <div class="mb-6">
+                                        <CategoryBadge categoryKey={currentCategory} />
+                                    </div>
+                                    <h1 class="text-2xl md:text-3xl font-bold leading-tight mb-4 text-white">"{currentQuestion}"</h1>
+                                </div>
+                            </div>
+
+                            {/* Content */}
+                            <div class="p-8 md:p-12">
+                                <p class="text-zinc-500 text-sm font-medium mb-8 text-center uppercase tracking-widest">Princípios Norteadores</p>
+                                
+                                <div class="space-y-6">
+                                    {top3.map((p, idx) => (
+                                        <div key={p.id} class="group flex gap-4 p-5 rounded-2xl bg-zinc-50 hover:bg-zinc-100 transition-colors border border-transparent hover:border-zinc-200">
+                                            <div class="text-3xl font-black text-zinc-200 group-hover:text-zinc-300 transition-colors pt-1">
+                                                0{idx + 1}
+                                            </div>
+                                            <div class="flex-1">
+                                                <p class="text-lg text-zinc-800 font-semibold mb-2 leading-snug">{p.text}</p>
+                                                {p.scripture && (
+                                                    <p class="text-sm font-bold text-violet-600 mb-4">
+                                                        {p.scripture}
+                                                    </p>
+                                                )}
+                                                
+                                                <div class="flex items-center gap-3">
+                                                    <span class={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded-md
+                                                        ${p.category === 'sim' ? 'bg-emerald-100 text-emerald-700' : 
+                                                          p.category === 'nao' ? 'bg-rose-100 text-rose-700' : 
+                                                          'bg-amber-100 text-amber-700'}`}>
+                                                        {p.category}
+                                                    </span>
+                                                    <span class="text-[10px] text-zinc-400 font-medium uppercase tracking-wide">
+                                                        Sugerido por {getTeamName(p.teamId)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+
+                                <div class="mt-12 pt-8 border-t border-zinc-100 text-center flex flex-col items-center">
+                                    <div class="w-12 h-12 bg-zinc-50 text-zinc-400 rounded-full flex items-center justify-center text-xl mb-4">
+                                        <i class="fa-solid fa-camera"></i>
+                                    </div>
+                                    <p class="text-sm text-zinc-500 font-medium">Salve esta tela para lembrar da decisão de vocês.</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Bottom Actions */}
+                        <div class="mt-8 flex gap-4 animate-slide-up" style={{animationDelay: '0.2s'}}>
+                            <button 
+                                onClick={() => {
+                                    setGameState('setup_question');
+                                    setCurrentQuestion('');
+                                    setCurrentCategory(null);
+                                    setPrinciples([]);
+                                    setPrincipleText('');
+                                    setScriptureText('');
+                                    setSelectedTeamId('');
+                                }}
+                                class="bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 font-bold py-3 px-6 rounded-full shadow-sm transition-all active:scale-95 text-sm"
+                            >
+                                Nova Pergunta
+                            </button>
+                            <button 
+                                onClick={() => window.location.reload()}
+                                class="bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 font-bold py-3 px-6 rounded-full transition-all active:scale-95 text-sm"
+                            >
+                                Encerrar
+                            </button>
+                        </div>
+                    </div>
+                );
+            };
+
+            return (
+                <div class="relative antialiased">
+                    {/* Floating Toast Notification */}
+                    {message && (
+                        <div class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 animate-slide-up">
+                            <div class={`px-6 py-4 rounded-2xl shadow-float font-bold text-sm flex items-center gap-3 text-white border border-white/20 backdrop-blur-md
+                                ${message.type === 'error' ? 'bg-rose-500/90' : message.type === 'warning' ? 'bg-amber-500/90' : 'bg-emerald-500/90'}
+                            `}>
+                                <i class={`fa-solid ${message.type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}`}></i>
+                                {message.text}
+                            </div>
+                        </div>
+                    )}
+
+                    {/* Game State Router */}
+                    {gameState === 'intro' && renderIntro()}
+                    {gameState === 'setup_teams' && renderSetupTeams()}
+                    {gameState === 'setup_question' && renderSetupQuestion()}
+                    {gameState === 'brainstorm' && renderBrainstorm()}
+                    {gameState === 'sorting' && renderSorting()}
+                    {gameState === 'top3' && renderTop3()}
+                    {gameState === 'result' && renderResult()}
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>
