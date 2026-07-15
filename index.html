@@ -21,6 +21,33 @@
     <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 
+    <!-- Firebase SDK (Modular) -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+        import { getFirestore, doc, setDoc, getDoc, onSnapshot, updateDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+
+        // Configuração fornecida
+        const firebaseConfig = {
+            apiKey: "AIzaSyCl5VuCauDi4Sb_8FX8arZrR4yUK7jE_GU",
+            authDomain: "jogo-principios-a5a55.firebaseapp.com",
+            projectId: "jogo-principios-a5a55",
+            storageBucket: "jogo-principios-a5a55.firebasestorage.app",
+            messagingSenderId: "377685007554",
+            appId: "1:377685007554:web:3c459280885b00eaf22f5b"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        
+        // Exportando globalmente para uso dentro do escopo do React
+        window.firebaseDB = getFirestore(app);
+        window.firebaseAuth = getAuth(app);
+        window.firebaseAPI = { doc, setDoc, getDoc, onSnapshot, updateDoc, signInAnonymously, onAuthStateChanged };
+        
+        // Dispara evento indicando que o Firebase carregou
+        window.dispatchEvent(new Event('firebase-loaded'));
+    </script>
+
     <!-- Tailwind Config for Custom Colors/Shadows -->
     <script>
         tailwind.config = {
@@ -29,23 +56,62 @@
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
                     },
+                    colors: {
+                        futuristic: {
+                            bg: '#050816',
+                            card: 'rgba(18,24,38,0.65)',
+                            border: 'rgba(255,255,255,0.08)',
+                            primary: '#7C5CFF',
+                            secondary: '#38BDF8',
+                            accent: '#00E5FF',
+                            success: '#10B981',
+                            warning: '#F59E0B',
+                            danger: '#EF4444',
+                            text: '#FFFFFF',
+                            textSec: 'rgba(255,255,255,0.65)'
+                        }
+                    },
                     boxShadow: {
-                        'soft': '0 10px 40px -10px rgba(0,0,0,0.05)',
-                        'float': '0 20px 40px -10px rgba(0,0,0,0.08)',
-                        'glow': '0 0 20px rgba(139, 92, 246, 0.3)',
+                        'soft': '0 10px 40px -10px rgba(0,0,0,0.5)',
+                        'float': '0 20px 40px -10px rgba(0,0,0,0.7)',
+                        'glow': '0 0 20px rgba(124, 92, 255, 0.4)',
+                        'glow-primary': '0 0 30px -5px rgba(124, 92, 255, 0.5)',
+                        'glow-success': '0 0 30px -5px rgba(16, 185, 129, 0.4)',
+                        'glow-danger': '0 0 30px -5px rgba(239, 68, 68, 0.4)',
+                        'inner-glow': 'inset 0 0 20px rgba(255, 255, 255, 0.05)',
                     },
                     animation: {
-                        'slide-up': 'slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
-                        'scale-in': 'scaleIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'slide-up': 'slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'scale-in': 'scaleIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards',
+                        'fade-in': 'fadeIn 0.6s ease-out forwards',
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulseGlow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'mesh': 'meshAnim 15s ease infinite alternate',
                     },
                     keyframes: {
                         slideUp: {
-                            '0%': { opacity: 0, transform: 'translateY(20px)' },
-                            '10%': { opacity: 1, transform: 'translateY(0)' },
+                            '0%': { opacity: 0, transform: 'translateY(30px)' },
+                            '100%': { opacity: 1, transform: 'translateY(0)' },
                         },
                         scaleIn: {
-                            '0%': { opacity: 0, transform: 'scale(0.95)' },
+                            '0%': { opacity: 0, transform: 'scale(0.92)' },
                             '100%': { opacity: 1, transform: 'scale(1)' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: 0 },
+                            '100%': { opacity: 1 },
+                        },
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        pulseGlow: {
+                            '0%, 100%': { opacity: 1, filter: 'brightness(1)' },
+                            '50%': { opacity: 0.8, filter: 'brightness(1.5)' },
+                        },
+                        meshAnim: {
+                            '0%': { backgroundPosition: '0% 0%' },
+                            '100%': { backgroundPosition: '100% 100%' },
                         }
                     }
                 }
@@ -55,80 +121,137 @@
 
     <style>
         body {
-            background-color: #fafafa; /* ultra light gray */
-            color: #18181b; /* zinc-900 */
+            background-color: #050816;
+            color: #FFFFFF;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
+            margin: 0;
+            overflow-x: hidden;
         }
-        
-        /* Premium custom scrollbar */
+
+        .bg-mesh {
+            background-image: 
+                radial-gradient(circle at 15% 50%, rgba(124, 92, 255, 0.15), transparent 25%),
+                radial-gradient(circle at 85% 30%, rgba(56, 189, 248, 0.15), transparent 25%),
+                radial-gradient(circle at 50% 80%, rgba(0, 229, 255, 0.1), transparent 30%);
+            background-size: 150% 150%;
+            background-attachment: fixed;
+            z-index: -1;
+        }
+
         .custom-scrollbar::-webkit-scrollbar {
-            width: 5px;
-            height: 5px;
+            width: 6px;
+            height: 6px;
         }
         .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background-color: #e4e4e7; /* zinc-200 */
+            background: rgba(255, 255, 255, 0.02);
             border-radius: 10px;
         }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background-color: rgba(255, 255, 255, 0.15);
+            border-radius: 10px;
+            transition: background-color 0.2s;
+        }
         .custom-scrollbar:hover::-webkit-scrollbar-thumb {
-            background-color: #d4d4d8; /* zinc-300 */
+            background-color: rgba(255, 255, 255, 0.3);
         }
 
-        /* Glass utilities */
+        .glass-panel {
+            background: rgba(18, 24, 38, 0.65);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 10px 40px -10px rgba(0,0,0,0.5), inset 0 1px 0 0 rgba(255,255,255,0.05);
+        }
+
         .glass-header {
-            background: rgba(255, 255, 255, 0.85);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(0,0,0,0.03);
+            background: rgba(5, 8, 22, 0.75);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.08);
         }
 
-        /* Input styling overrides */
         .premium-input {
-            background-color: #f4f4f5;
-            border: 1px solid transparent;
-            transition: all 0.2s ease;
+            background-color: rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #FFFFFF;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .premium-input::placeholder {
+            color: rgba(255, 255, 255, 0.3);
         }
         .premium-input:focus {
-            background-color: #ffffff;
-            border-color: #c4b5fd;
-            box-shadow: 0 0 0 4px rgba(139, 92, 246, 0.1);
+            background-color: rgba(18, 24, 38, 0.8);
+            border-color: #7C5CFF;
+            box-shadow: 0 0 0 3px rgba(124, 92, 255, 0.2), inset 0 0 10px rgba(124, 92, 255, 0.1);
             outline: none;
         }
 
-        /* Background Pattern */
-        .bg-pattern {
-            background-image: radial-gradient(#e4e4e7 1px, transparent 1px);
-            background-size: 24px 24px;
+        select option {
+            background-color: #121826;
+            color: #FFFFFF;
+        }
+
+        .btn-premium {
+            background: linear-gradient(135deg, #7C5CFF 0%, #38BDF8 100%);
+            position: relative;
+            z-index: 1;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .btn-premium::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, #38BDF8 0%, #7C5CFF 100%);
+            opacity: 0;
+            z-index: -1;
+            transition: opacity 0.3s ease;
+        }
+        .btn-premium:hover::before {
+            opacity: 1;
+        }
+        .btn-premium:hover {
+            box-shadow: 0 0 25px rgba(124, 92, 255, 0.5);
+            transform: translateY(-2px);
+        }
+        .btn-premium:active {
+            transform: scale(0.98);
+        }
+
+        .ambient-glow {
+            position: absolute;
+            width: 300px;
+            height: 300px;
+            border-radius: 50%;
+            filter: blur(100px);
+            z-index: -1;
+            opacity: 0.5;
+            pointer-events: none;
         }
     </style>
 </head>
-<body class="min-h-screen selection:bg-violet-200 selection:text-violet-900">
+<body class="min-h-screen selection:bg-futuristic-primary/30 selection:text-white bg-mesh animate-mesh">
 
     <div id="root"></div>
 
     <script type="text/babel">
-
         const { useState, useEffect, useRef } = React;
 
-        // Generate unique IDs
         const generateId = () => Math.random().toString(36).substr(2, 9);
 
         const CATEGORIES = {
-            financas: { name: "Finanças, Trabalho e Bens Materiais", color: "bg-emerald-100 text-emerald-800 border-emerald-300", dot: "bg-emerald-500" },
-            mudancas: { name: "Mudanças e Decisões de Vida", color: "bg-zinc-200 text-zinc-800 border-zinc-400", dot: "bg-zinc-600" },
-            aparencia: { name: "Aparência e Estilo de Vida", color: "bg-stone-200 text-stone-800 border-stone-400", dot: "bg-stone-600" },
-            diversao: { name: "Diversão, Lazer e Entretenimento", color: "bg-rose-100 text-rose-800 border-rose-300", dot: "bg-rose-500" },
-            relacionamentos: { name: "Relacionamentos e Família", color: "bg-amber-100 text-amber-800 border-amber-300", dot: "bg-amber-500" },
-            tecnologia: { name: "Tecnologia e Redes Sociais", color: "bg-violet-100 text-violet-800 border-violet-300", dot: "bg-violet-500" },
-            espiritual: { name: "Vida Espiritual e Ministério", color: "bg-blue-100 text-blue-800 border-blue-300", dot: "bg-blue-500" },
-            saude: { name: "Saúde, Tempo e Equilíbrio", color: "bg-orange-100 text-orange-800 border-orange-300", dot: "bg-orange-500" }
+            financas: { name: "Finanças, Trabalho e Bens Materiais", color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20", dot: "bg-emerald-400 shadow-[0_0_8px_#34d399]" },
+            mudancas: { name: "Mudanças e Decisões de Vida", color: "bg-white/5 text-white/80 border-white/10", dot: "bg-white/80 shadow-[0_0_8px_#ffffff]" },
+            aparencia: { name: "Aparência e Estilo de Vida", color: "bg-stone-500/20 text-stone-300 border-stone-500/30", dot: "bg-stone-400 shadow-[0_0_8px_#a8a29e]" },
+            diversao: { name: "Diversão, Lazer e Entretenimento", color: "bg-rose-500/10 text-rose-400 border-rose-500/20", dot: "bg-rose-500 shadow-[0_0_8px_#f43f5e]" },
+            relacionamentos: { name: "Relacionamentos e Família", color: "bg-amber-500/10 text-amber-400 border-amber-500/20", dot: "bg-amber-400 shadow-[0_0_8px_#fbbf24]" },
+            tecnologia: { name: "Tecnologia e Redes Sociais", color: "bg-fuchsia-500/10 text-fuchsia-400 border-fuchsia-500/20", dot: "bg-fuchsia-400 shadow-[0_0_8px_#e879f9]" },
+            espiritual: { name: "Vida Espiritual e Ministério", color: "bg-blue-500/10 text-blue-400 border-blue-500/20", dot: "bg-blue-400 shadow-[0_0_8px_#60a5fa]" },
+            saude: { name: "Saúde, Tempo e Equilíbrio", color: "bg-orange-500/10 text-orange-400 border-orange-500/20", dot: "bg-orange-400 shadow-[0_0_8px_#fb923c]" }
         };
 
         const ALL_QUESTIONS = [
-            // Finanças (12)
             { category: 'financas', text: "Devo comprar um carro zero?" },
             { category: 'financas', text: "Devo fazer um empréstimo longo para viajar?" },
             { category: 'financas', text: "Devo aceitar um emprego que paga muito mais, mas exige horas extras constantes?" },
@@ -141,7 +264,6 @@
             { category: 'financas', text: "Devo participar de um esquema de investimento que promete lucro rápido e fácil?" },
             { category: 'financas', text: "Devo fazer apostas esportivas valendo dinheiro?" },
             { category: 'financas', text: "Devo comprar itens de grife apenas para impressionar os outros?" },
-            // Mudanças (12)
             { category: 'mudancas', text: "Devo mudar de cidade em busca de um estilo de vida melhor?" },
             { category: 'mudancas', text: "Devo emigrar para outro país por motivos puramente econômicos?" },
             { category: 'mudancas', text: "Devo trocar de profissão radicalmente após anos na mesma carreira?" },
@@ -154,7 +276,6 @@
             { category: 'mudancas', text: "Devo aceitar uma promoção que me fará viajar o tempo todo?" },
             { category: 'mudancas', text: "Devo me mudar para ficar mais perto dos meus pais idosos?" },
             { category: 'mudancas', text: "Devo abandonar um emprego estável para abrir meu próprio negócio?" },
-            // Aparência (12)
             { category: 'aparencia', text: "Devo fazer uma tatuagem?" },
             { category: 'aparencia', text: "Devo seguir tendências de moda extremamente justas ou curtas?" },
             { category: 'aparencia', text: "Devo fazer uma cirurgia plástica puramente estética?" },
@@ -167,7 +288,6 @@
             { category: 'aparencia', text: "Devo adotar um corte de cabelo excêntrico?" },
             { category: 'aparencia', text: "Devo adotar um estilo de vestuário minimalista extremo?" },
             { category: 'aparencia', text: "Devo gastar uma parte significativa do meu orçamento em produtos de beleza?" },
-            // Diversão (12)
             { category: 'diversao', text: "Devo assistir a filmes/séries com alta classificação indicativa de violência ou imoralidade?" },
             { category: 'diversao', text: "Devo ir a uma festa com colegas de trabalho que não compartilham dos meus princípios?" },
             { category: 'diversao', text: "Devo jogar videogames focados em violência intensa?" },
@@ -180,7 +300,6 @@
             { category: 'diversao', text: "Devo assistir a reality shows focados em intrigas e brigas?" },
             { category: 'diversao', text: "Devo praticar artes marciais de contato físico violento?" },
             { category: 'diversao', text: "Devo gastar quantias altas de dinheiro em ingressos VIP para entretenimento?" },
-            // Relacionamentos (13)
             { category: 'relacionamentos', text: "Devo namorar alguém que ainda não tem a mesma fé, mas está 'estudando'?" },
             { category: 'relacionamentos', text: "Devo cortar contato definitivamente com um amigo que me ofendeu muito?" },
             { category: 'relacionamentos', text: "Devo perdoar um familiar que repete o mesmo erro diversas vezes?" },
@@ -194,7 +313,6 @@
             { category: 'relacionamentos', text: "Devo ter filhos neste exato momento da vida?" },
             { category: 'relacionamentos', text: "Devo convidar um parente distante e problemático para morar temporariamente comigo?" },
             { category: 'relacionamentos', text: "Devo gastar mais tempo com amigos do que com minha própria família?" },
-            // Tecnologia (13)
             { category: 'tecnologia', text: "Devo ter um perfil público nas redes sociais e aceitar qualquer seguidor?" },
             { category: 'tecnologia', text: "Devo dar um smartphone de última geração para meu filho criança?" },
             { category: 'tecnologia', text: "Devo postar fotos frequentes exibindo posses materiais ou viagens luxuosas?" },
@@ -208,7 +326,6 @@
             { category: 'tecnologia', text: "Devo publicar detalhes íntimos ou rotineiros da minha vida familiar online?" },
             { category: 'tecnologia', text: "Devo manter 'amizades' intensas de forma exclusivamente virtual?" },
             { category: 'tecnologia', text: "Devo permitir que a televisão fique ligada como 'ruído de fundo' o dia todo?" },
-            // Espiritual (13)
             { category: 'espiritual', text: "Devo iniciar o serviço de pioneiro regular agora?" },
             { category: 'espiritual', text: "Devo me mudar para servir onde há maior necessidade?" },
             { category: 'espiritual', text: "Devo aceitar uma designação na congregação mesmo me sentindo totalmente desqualificado?" },
@@ -222,7 +339,6 @@
             { category: 'espiritual', text: "Devo convidar vizinhos com os quais nunca conversei para eventos especiais?" },
             { category: 'espiritual', text: "Devo buscar ativamente privilégios na congregação para ser visto como espiritual?" },
             { category: 'espiritual', text: "Devo ser hospitaleiro organizando refeições para irmãos que não são meus amigos próximos?" },
-            // Saúde (13)
             { category: 'saude', text: "Devo seguir dietas da moda rigorosas e não comprovadas pela medicina?" },
             { category: 'saude', text: "Devo treinar na academia intensamente todos os dias, abdicando de descanso?" },
             { category: 'saude', text: "Devo usar tratamentos médicos alternativos controversos?" },
@@ -240,62 +356,63 @@
 
         const CategoryBadge = ({ categoryKey }) => {
             if (!categoryKey || !CATEGORIES[categoryKey]) return (
-                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest bg-zinc-100 text-zinc-500 border border-zinc-200 shadow-sm transition-all">
-                    <span class="w-2 h-2 rounded-full bg-zinc-400"></span> Personalizada
+                <span class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest bg-white/5 text-white/60 border border-white/10 shadow-sm transition-all">
+                    <span class="w-2 h-2 rounded-full bg-white/40 shadow-[0_0_8px_rgba(255,255,255,0.4)]"></span> Personalizada
                 </span>
             );
             const cat = CATEGORIES[categoryKey];
             return (
-                <span class={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm transition-all ${cat.color}`}>
-                    <span class={`w-2 h-2 rounded-full shadow-sm ${cat.dot}`}></span> {cat.name}
+                <span class={`inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-[10px] font-bold uppercase tracking-widest border shadow-sm transition-all backdrop-blur-md ${cat.color}`}>
+                    <span class={`w-2 h-2 rounded-full ${cat.dot}`}></span> {cat.name}
                 </span>
             );
         };
 
-        // Extracted Column Component
         const Column = ({ title, colorClass, items, icon, getTeamName }) => {
-            // Map generic tailwind colors passed to specific modern hues
-            let bgStyle = "bg-white border-zinc-100";
-            let headerStyle = "text-zinc-500";
-            let pillStyle = "bg-zinc-100 text-zinc-600";
+            let bgStyle = "bg-white/5 border-white/10";
+            let headerStyle = "text-white/70";
+            let pillStyle = "bg-white/10 text-white/80 border border-white/10";
+            let glow = "";
             
             if (colorClass.includes('emerald')) {
-                bgStyle = "bg-emerald-50/50 border-emerald-100";
-                headerStyle = "text-emerald-700";
-                pillStyle = "bg-emerald-100 text-emerald-800";
+                bgStyle = "bg-futuristic-success/5 border-futuristic-success/20";
+                headerStyle = "text-futuristic-success drop-shadow-[0_0_8px_rgba(16,185,129,0.5)]";
+                pillStyle = "bg-futuristic-success/20 text-emerald-300 border border-futuristic-success/30";
+                glow = "shadow-glow-success";
             } else if (colorClass.includes('amber')) {
-                bgStyle = "bg-amber-50/50 border-amber-100";
-                headerStyle = "text-amber-700";
-                pillStyle = "bg-amber-100 text-amber-800";
+                bgStyle = "bg-futuristic-warning/5 border-futuristic-warning/20";
+                headerStyle = "text-futuristic-warning drop-shadow-[0_0_8px_rgba(245,158,11,0.5)]";
+                pillStyle = "bg-futuristic-warning/20 text-amber-300 border border-futuristic-warning/30";
             } else if (colorClass.includes('rose')) {
-                bgStyle = "bg-rose-50/50 border-rose-100";
-                headerStyle = "text-rose-700";
-                pillStyle = "bg-rose-100 text-rose-800";
+                bgStyle = "bg-futuristic-danger/5 border-futuristic-danger/20";
+                headerStyle = "text-futuristic-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.5)]";
+                pillStyle = "bg-futuristic-danger/20 text-rose-300 border border-futuristic-danger/30";
+                glow = "shadow-glow-danger";
             }
 
             return (
-                <div class={`flex-1 min-w-[260px] rounded-3xl p-5 flex flex-col max-h-[65vh] border overflow-hidden shadow-soft ${bgStyle}`}>
-                    <div class="flex items-center justify-between mb-5">
-                        <h3 class={`font-bold flex items-center gap-2 text-sm tracking-wide uppercase ${headerStyle}`}>
-                            <i class={`fa-solid ${icon}`}></i> {title}
+                <div class={`flex-1 min-w-[280px] rounded-3xl p-6 flex flex-col max-h-[65vh] border overflow-hidden backdrop-blur-xl transition-all duration-500 hover:bg-opacity-10 ${bgStyle}`}>
+                    <div class="flex items-center justify-between mb-6 pb-4 border-b border-white/5">
+                        <h3 class={`font-bold flex items-center gap-3 text-sm tracking-widest uppercase ${headerStyle}`}>
+                            <i class={`fa-solid ${icon} text-lg`}></i> {title}
                         </h3>
-                        <span class={`text-xs font-bold px-2 py-1 rounded-full ${pillStyle}`}>
+                        <span class={`text-xs font-bold px-3 py-1 rounded-full ${pillStyle}`}>
                             {items.length}
                         </span>
                     </div>
                     
-                    <div class="space-y-3 overflow-y-auto custom-scrollbar pr-2 pb-4 flex-1">
+                    <div class="space-y-4 overflow-y-auto custom-scrollbar pr-3 pb-4 flex-1">
                         {items.length === 0 && (
-                            <div class="h-full flex items-center justify-center opacity-40 text-sm font-medium border-2 border-dashed border-current rounded-2xl">
+                            <div class="h-full flex items-center justify-center opacity-30 text-sm font-medium border-2 border-dashed border-white/20 rounded-2xl">
                                 Área vazia
                             </div>
                         )}
                         {items.map(p => (
-                            <div key={p.id} class="bg-white p-4 rounded-2xl shadow-[0_2px_8px_-2px_rgba(0,0,0,0.05)] border border-zinc-100 relative group animate-slide-up hover:border-zinc-300 transition-colors">
-                                <p class="font-medium text-zinc-800 text-sm leading-relaxed mb-2">{p.text}</p>
-                                {p.scripture && <p class="text-[11px] font-bold text-violet-600 mb-1 inline-flex items-center gap-1"><i class="fa-solid fa-book-open opacity-50"></i> {p.scripture}</p>}
-                                <div class="text-[10px] text-zinc-400 mt-2 font-medium tracking-wide uppercase">
-                                    Por {getTeamName(p.teamId)}
+                            <div key={p.id} class="bg-white/5 backdrop-blur-md p-5 rounded-2xl border border-white/10 relative group animate-slide-up hover:bg-white/10 hover:border-white/20 transition-all hover:shadow-[0_8px_30px_rgba(0,0,0,0.4)]">
+                                <p class="font-medium text-white/90 text-sm leading-relaxed mb-3">{p.text}</p>
+                                {p.scripture && <p class="text-[11px] font-bold text-futuristic-secondary mb-2 inline-flex items-center gap-1.5"><i class="fa-solid fa-book-open opacity-70"></i> {p.scripture}</p>}
+                                <div class="text-[10px] text-white/40 font-semibold tracking-widest uppercase flex items-center gap-2">
+                                    <div class="w-1 h-1 rounded-full bg-white/30"></div> Por {getTeamName(p.teamId)}
                                 </div>
                             </div>
                         ))}
@@ -305,44 +422,132 @@
         };
 
         const App = () => {
-            // Game States: 'intro', 'setup_teams', 'setup_question', 'brainstorm', 'sorting', 'top3', 'result'
+            // Estado Global - Firebase e Auth
+            const [firebaseLoaded, setFirebaseLoaded] = useState(!!window.firebaseDB);
+            const [userUid, setUserUid] = useState(null);
+            
+            // Estado Global da Sala Online
+            const [roomId, setRoomId] = useState('');
+            const [inRoom, setInRoom] = useState(false);
+            const [roomHostUid, setRoomHostUid] = useState(null);
+            
+            // Estado do Jogo (Sincronizado)
             const [gameState, setGameState] = useState('intro');
             const [teams, setTeams] = useState([{ id: generateId(), name: 'Equipe 1' }, { id: generateId(), name: 'Equipe 2' }]);
             const [currentQuestion, setCurrentQuestion] = useState('');
             const [currentCategory, setCurrentCategory] = useState(null);
             const [availableQuestions, setAvailableQuestions] = useState([...ALL_QUESTIONS]);
-            const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
-            const [questionInputMode, setQuestionInputMode] = useState('draw');
-            const [principles, setPrinciples] = useState([]); // { id, text, scripture, teamId, category: 'pool'|'sim'|'nao'|'depende', isTop3: false }
-            const [timer, setTimer] = useState(180); // 3 minutes default
+            const [principles, setPrinciples] = useState([]);
+            const [timer, setTimer] = useState(180);
+            const [timerEndsAt, setTimerEndsAt] = useState(null);
             const [isTimerRunning, setIsTimerRunning] = useState(false);
-            const [currentTurnIndex, setCurrentTurnIndex] = useState(0);
             const [activePrinciple, setActivePrinciple] = useState(null);
 
-            // Brainstorm form states
+            // Estado Local da Interface
+            const [localTimer, setLocalTimer] = useState(180);
+            const [selectedCategoryFilter, setSelectedCategoryFilter] = useState('all');
+            const [questionInputMode, setQuestionInputMode] = useState('draw');
             const [principleText, setPrincipleText] = useState('');
             const [scriptureText, setScriptureText] = useState('');
             const [selectedTeamId, setSelectedTeamId] = useState('');
-
-            // Error/Message state instead of alert()
             const [message, setMessage] = useState(null);
+            const [joinCode, setJoinCode] = useState('');
+            const [joinName, setJoinName] = useState('');
+            const [isJoiningRoom, setIsJoiningRoom] = useState(false);
+
+            // Verifica se o usuário atual é o Host
+            const isHost = !inRoom || roomHostUid === userUid;
 
             const showMessage = (msg, type = 'error') => {
                 setMessage({ text: msg, type });
-                setTimeout(() => setMessage(null), 3000);
+                setTimeout(() => setMessage(null), 4000);
             };
 
+            // EFEITO 1: Carregamento do Firebase SDK
+            useEffect(() => {
+                if (!firebaseLoaded) {
+                    const handleLoad = () => setFirebaseLoaded(true);
+                    window.addEventListener('firebase-loaded', handleLoad);
+                    return () => window.removeEventListener('firebase-loaded', handleLoad);
+                }
+            }, [firebaseLoaded]);
+
+            // EFEITO 2: Login Anônimo (Necessário para Firestore Rules)
+            useEffect(() => {
+                if (!firebaseLoaded) return;
+                const { signInAnonymously, onAuthStateChanged } = window.firebaseAPI;
+                const auth = window.firebaseAuth;
+
+                const initAuth = async () => {
+                    try {
+                        await signInAnonymously(auth);
+                    } catch (error) {
+                        console.error("Auth Error:", error);
+                        // Tratamento de Erro Específico: Configuração não encontrada no Console
+                        if (error.code?.includes('configuration-not-found') || error.message?.includes('configuration-not-found') || error.code === 'auth/operation-not-allowed') {
+                            showMessage("Aviso Firebase: Ative o 'Login Anônimo' no painel de Autenticação do seu Firebase para jogar online.", "warning");
+                        } else {
+                            showMessage("Falha na conexão online. O modo local continua disponível.", "error");
+                        }
+                    }
+                };
+                initAuth();
+                
+                const unsubscribe = onAuthStateChanged(auth, (user) => {
+                    if (user) setUserUid(user.uid);
+                });
+                return () => unsubscribe();
+            }, [firebaseLoaded]);
+
+            // EFEITO 3: Escuta em Tempo Real do Firestore (Multiplayer)
+            useEffect(() => {
+                if (!inRoom || !roomId || !firebaseLoaded) return;
+                const { doc, onSnapshot } = window.firebaseAPI;
+                const db = window.firebaseDB;
+
+                const roomRef = doc(db, 'rooms', roomId);
+                const unsub = onSnapshot(roomRef, (document) => {
+                    if (document.exists()) {
+                        const data = document.data();
+                        if (data.host) setRoomHostUid(data.host);
+                        if (data.gameState) setGameState(data.gameState);
+                        if (data.teams) setTeams(data.teams);
+                        if (data.currentQuestion !== undefined) setCurrentQuestion(data.currentQuestion);
+                        if (data.currentCategory !== undefined) setCurrentCategory(data.currentCategory);
+                        if (data.principles) setPrinciples(data.principles);
+                        if (data.activePrinciple !== undefined) setActivePrinciple(data.activePrinciple);
+                        if (data.timerEndsAt !== undefined) setTimerEndsAt(data.timerEndsAt);
+                        if (data.timer !== undefined) setTimer(data.timer);
+                        if (data.isTimerRunning !== undefined) setIsTimerRunning(data.isTimerRunning);
+                        if (data.availableQuestions) setAvailableQuestions(data.availableQuestions);
+                    } else {
+                        // Sala foi excluída
+                        setInRoom(false);
+                        setGameState('intro');
+                        showMessage("A sala foi encerrada.", "warning");
+                    }
+                }, (error) => {
+                    console.error("Sync error:", error);
+                });
+                return () => unsub();
+            }, [inRoom, roomId, firebaseLoaded]);
+
+            // EFEITO 4: Timer Local Inteligente
             useEffect(() => {
                 let interval = null;
-                if (isTimerRunning && timer > 0) {
+                if (isTimerRunning && timerEndsAt) {
                     interval = setInterval(() => {
-                        setTimer(seconds => seconds - 1);
+                        const remaining = Math.max(0, Math.floor((timerEndsAt - Date.now()) / 1000));
+                        setLocalTimer(remaining);
+                        if (remaining === 0) {
+                            setIsTimerRunning(false); 
+                        }
                     }, 1000);
-                } else if (timer === 0) {
-                    setIsTimerRunning(false);
+                } else {
+                    setLocalTimer(timer);
                 }
                 return () => clearInterval(interval);
-            }, [isTimerRunning, timer]);
+            }, [isTimerRunning, timerEndsAt, timer]);
 
             const formatTime = (seconds) => {
                 const m = Math.floor(seconds / 60);
@@ -350,34 +555,200 @@
                 return `${m}:${s < 10 ? '0' : ''}${s}`;
             };
 
-            const renderIntro = () => (
-                <div class="relative flex flex-col items-center justify-center min-h-screen p-4 text-center overflow-hidden bg-pattern">
-                    {/* Decorative blurred blobs */}
-                    <div class="absolute top-[-10%] left-[-10%] w-[40vw] h-[40vw] rounded-full bg-violet-200/50 blur-[100px] pointer-events-none"></div>
-                    <div class="absolute bottom-[-10%] right-[-10%] w-[40vw] h-[40vw] rounded-full bg-blue-100/50 blur-[100px] pointer-events-none"></div>
+            // Função Central de Sincronização (Com fallback Local Inteligente)
+            const syncUpdate = async (updates) => {
+                // FALLBACK LOCAL: Se não estiver em sala, atualiza os estados localmente (permite jogar offline perfeitamente)
+                if (!inRoom || !roomId || !firebaseLoaded) {
+                    if (updates.gameState) setGameState(updates.gameState);
+                    if (updates.teams) setTeams(updates.teams);
+                    if (updates.currentQuestion !== undefined) setCurrentQuestion(updates.currentQuestion);
+                    if (updates.currentCategory !== undefined) setCurrentCategory(updates.currentCategory);
+                    if (updates.principles) setPrinciples(updates.principles);
+                    if (updates.activePrinciple !== undefined) setActivePrinciple(updates.activePrinciple);
+                    if (updates.timerEndsAt !== undefined) setTimerEndsAt(updates.timerEndsAt);
+                    if (updates.timer !== undefined) setTimer(updates.timer);
+                    if (updates.isTimerRunning !== undefined) setIsTimerRunning(updates.isTimerRunning);
+                    if (updates.availableQuestions) setAvailableQuestions(updates.availableQuestions);
+                    return;
+                }
+                
+                // MODO ONLINE
+                try {
+                    const { doc, updateDoc } = window.firebaseAPI;
+                    const roomRef = doc(window.firebaseDB, 'rooms', roomId);
+                    await updateDoc(roomRef, updates);
+                } catch (e) {
+                    console.error("Error updating room:", e);
+                }
+            };
 
-                    <div class="relative max-w-2xl w-full bg-white/70 backdrop-blur-2xl p-10 md:p-14 rounded-[2.5rem] shadow-soft border border-white">
-                        <div class="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-violet-50 text-violet-600 mb-8 shadow-sm">
-                            <i class="fa-solid fa-scale-balanced text-4xl"></i>
+            const toggleTimer = () => {
+                if (isTimerRunning) {
+                    syncUpdate({ isTimerRunning: false, timer: localTimer });
+                } else {
+                    syncUpdate({ isTimerRunning: true, timerEndsAt: Date.now() + localTimer * 1000 });
+                }
+            };
+
+            // Lógica Multiplayer: Criar/Entrar Sala
+            const createRoom = async () => {
+                if (!userUid || !firebaseLoaded) {
+                    showMessage("Aguarde a conexão com Firebase ou use o modo Local.", "warning");
+                    return;
+                }
+                const newRoomId = Math.random().toString(36).substring(2, 7).toUpperCase();
+                try {
+                    const { doc, setDoc } = window.firebaseAPI;
+                    const roomRef = doc(window.firebaseDB, 'rooms', newRoomId);
+                    await setDoc(roomRef, {
+                        host: userUid,
+                        gameState: 'setup_teams',
+                        teams: [{ id: generateId(), name: 'Equipe 1' }, { id: generateId(), name: 'Equipe 2' }],
+                        currentQuestion: '',
+                        currentCategory: null,
+                        availableQuestions: ALL_QUESTIONS,
+                        principles: [],
+                        timer: 180,
+                        isTimerRunning: false,
+                        activePrinciple: null
+                    });
+                    setRoomId(newRoomId);
+                    setInRoom(true);
+                } catch (e) {
+                    showMessage("Erro ao criar sala. Verifique a internet e as configurações do Firebase.", "error");
+                }
+            };
+
+            const joinRoom = async (code, name) => {
+                if (!code || !name) {
+                    showMessage("Preencha seu nome e o código da sala.", "warning");
+                    return;
+                }
+                if (!userUid || !firebaseLoaded) return;
+                const roomCode = code.toUpperCase();
+                try {
+                    const { doc, getDoc, updateDoc } = window.firebaseAPI;
+                    const roomRef = doc(window.firebaseDB, 'rooms', roomCode);
+                    const docSnap = await getDoc(roomRef);
+                    if (docSnap.exists()) {
+                        const roomData = docSnap.data();
+                        // Adiciona o jogador à lista se ainda não estiver
+                        const existingTeams = roomData.teams || [];
+                        const alreadyIn = existingTeams.some(t => t.id === userUid);
+                        if (!alreadyIn) {
+                            const newTeams = [...existingTeams, { id: userUid, name: name }];
+                            await updateDoc(roomRef, { teams: newTeams });
+                        }
+                        setRoomId(roomCode);
+                        setInRoom(true);
+                    } else {
+                        showMessage('Sala não encontrada!', 'error');
+                    }
+                } catch (e) {
+                    showMessage("Erro ao conectar na sala.", "error");
+                }
+            };
+
+            // Componente Fixo que Mostra o Código da Sala (HUD)
+            const RoomBadge = () => {
+                if (!inRoom) return null;
+                return (
+                    <div class="fixed bottom-6 right-6 z-50 bg-white/5 backdrop-blur-xl border border-white/10 rounded-2xl px-6 py-3 shadow-float animate-slide-up flex flex-col items-center group cursor-pointer hover:bg-white/10 transition-colors" onClick={() => {navigator.clipboard.writeText(roomId); showMessage("Código copiado!", "success")}}>
+                        <span class="text-[10px] font-bold tracking-widest text-white/50 uppercase mb-1">Código da Sala</span>
+                        <div class="flex items-center gap-3">
+                            <div class="w-2 h-2 bg-futuristic-success rounded-full animate-pulse shadow-glow-success"></div>
+                            <span class="text-xl font-mono font-bold tracking-[0.2em] text-white">{roomId}</span>
+                            <i class="fa-solid fa-copy text-white/30 text-xs ml-1 group-hover:text-white/80 transition-colors"></i>
                         </div>
-                        <h1 class="text-4xl md:text-5xl font-extrabold text-zinc-900 mb-6 tracking-tight">O Desafio dos Princípios</h1>
-                        
-                        <p class="text-lg md:text-xl text-zinc-500 mb-10 leading-relaxed font-light">
-                            No dia a dia, enfrentamos muitas decisões. Este desafio convida você a refletir sobre princípios bíblicos de forma descontraída, afiando seu discernimento.
-                        </p>
-                        
-                        <button 
-                            onClick={() => setGameState('setup_teams')}
-                            class="group relative inline-flex items-center justify-center bg-zinc-900 text-white font-medium py-4 px-12 rounded-full text-lg overflow-hidden transition-all duration-300 hover:scale-105 hover:shadow-float active:scale-95"
-                        >
-                            <span class="relative z-10 flex items-center gap-3">
-                                Começar Jogo <i class="fa-solid fa-arrow-right group-hover:translate-x-1 transition-transform"></i>
-                            </span>
-                            <div class="absolute inset-0 bg-violet-600 translate-y-[100%] group-hover:translate-y-0 transition-transform duration-300 ease-in-out z-0"></div>
-                        </button>
                     </div>
-                </div>
-            );
+                );
+            };
+
+            // --- RENDERIZADORES DE ESTADO ---
+            
+            if (!firebaseLoaded) {
+                return (
+                    <div class="min-h-screen flex items-center justify-center bg-futuristic-bg text-white">
+                        <div class="flex flex-col items-center animate-pulse">
+                            <i class="fa-solid fa-circle-notch fa-spin text-4xl text-futuristic-primary mb-4"></i>
+                            <span class="font-bold tracking-widest uppercase text-sm text-futuristic-textSec">Conectando...</span>
+                        </div>
+                    </div>
+                );
+            }
+
+            const renderIntro = () => {
+                if (isJoiningRoom) {
+                    return (
+                        <div class="relative flex flex-col items-center justify-center min-h-screen p-6 text-center overflow-hidden">
+                            <div class="ambient-glow bg-futuristic-primary top-[20%] left-[20%] animate-pulse-glow"></div>
+                            <div class="glass-panel relative max-w-lg w-full p-12 rounded-[2.5rem] animate-scale-in">
+                                <h2 class="text-3xl font-extrabold mb-8 tracking-tighter text-white">Entrar na Sala</h2>
+                                <div class="space-y-4 mb-8">
+                                    <input 
+                                        type="text" 
+                                        placeholder="SEU NOME" 
+                                        value={joinName}
+                                        onChange={e => setJoinName(e.target.value)}
+                                        maxLength={20}
+                                        class="premium-input w-full rounded-2xl p-5 text-center text-xl font-bold uppercase"
+                                    />
+                                    <input 
+                                        type="text" 
+                                        placeholder="CÓDIGO DA SALA" 
+                                        value={joinCode}
+                                        onChange={e => setJoinCode(e.target.value.toUpperCase())}
+                                        maxLength={5}
+                                        class="premium-input w-full rounded-2xl p-5 text-center text-3xl tracking-[0.5em] font-bold uppercase"
+                                    />
+                                </div>
+                                <div class="flex flex-col md:flex-row gap-4">
+                                    <button onClick={() => setIsJoiningRoom(false)} class="flex-1 bg-white/5 border border-white/10 hover:bg-white/10 text-white font-bold py-4 rounded-2xl transition-all">
+                                        Voltar
+                                    </button>
+                                    <button onClick={() => joinRoom(joinCode, joinName)} class="flex-1 btn-premium text-white font-bold py-4 rounded-2xl transition-all shadow-glow-primary">
+                                        Entrar <i class="fa-solid fa-right-to-bracket ml-2"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    );
+                }
+
+                return (
+                    <div class="relative flex flex-col items-center justify-center min-h-screen p-6 text-center overflow-hidden">
+                        <div class="ambient-glow bg-futuristic-primary top-[20%] left-[20%] animate-pulse-glow"></div>
+                        <div class="ambient-glow bg-futuristic-secondary bottom-[20%] right-[20%] animate-pulse-glow" style={{animationDelay: '1s'}}></div>
+
+                        <div class="glass-panel relative max-w-3xl w-full p-12 md:p-16 rounded-[2.5rem] animate-scale-in">
+                            <div class="inline-flex items-center justify-center w-24 h-24 rounded-3xl bg-white/5 border border-white/10 text-futuristic-secondary mb-10 shadow-inner-glow relative overflow-hidden">
+                                <div class="absolute inset-0 bg-gradient-to-br from-futuristic-primary/20 to-transparent"></div>
+                                <i class="fa-solid fa-scale-balanced text-5xl relative z-10 drop-shadow-[0_0_15px_rgba(56,189,248,0.5)]"></i>
+                            </div>
+                            
+                            <h1 class="text-5xl md:text-6xl font-extrabold mb-8 tracking-tighter bg-clip-text text-transparent bg-gradient-to-b from-white to-white/60 drop-shadow-sm">
+                                O Desafio dos Princípios
+                            </h1>
+                            
+                            <p class="text-lg md:text-xl text-futuristic-textSec mb-12 leading-relaxed font-light max-w-xl mx-auto">
+                                No dia a dia, enfrentamos muitas decisões. Crie uma sala online para jogar com os amigos ou inicie a experiência localmente agora mesmo.
+                            </p>
+                            
+                            <div class="flex flex-col sm:flex-row flex-wrap justify-center gap-4 w-full max-w-2xl mx-auto">
+                                <button onClick={createRoom} class="btn-premium flex-1 min-w-[200px] text-white font-semibold py-4 rounded-2xl text-base shadow-glow-primary transition-all active:scale-95">
+                                    Criar Sala <i class="fa-solid fa-globe ml-2"></i>
+                                </button>
+                                <button onClick={() => setIsJoiningRoom(true)} class="flex-1 min-w-[200px] bg-white/5 hover:bg-white/10 border border-white/10 text-white font-semibold py-4 rounded-2xl text-base transition-all active:scale-95 shadow-soft">
+                                    Entrar <i class="fa-solid fa-users ml-2 text-white/50"></i>
+                                </button>
+                                <button onClick={() => syncUpdate({ gameState: 'setup_teams' })} class="flex-1 min-w-[200px] bg-transparent hover:bg-white/5 border border-transparent hover:border-white/10 text-white/50 hover:text-white font-semibold py-4 rounded-2xl text-base transition-all active:scale-95">
+                                    Jogar Local <i class="fa-solid fa-mobile-screen ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                );
+            };
 
             const renderSetupTeams = () => {
                 const addTeam = () => {
@@ -385,11 +756,17 @@
                         showMessage("Máximo de 6 equipes atingido.");
                         return;
                     }
-                    setTeams([...teams, { id: generateId(), name: `Equipe ${teams.length + 1}` }]);
+                    const newTeams = [...teams, { id: generateId(), name: `Equipe ${teams.length + 1}` }];
+                    setTeams(newTeams); // Update local fast
+                    syncUpdate({ teams: newTeams }); // Sync
                 };
 
                 const updateTeamName = (id, newName) => {
                     setTeams(teams.map(t => t.id === id ? { ...t, name: newName } : t));
+                };
+                
+                const handleTeamBlur = () => {
+                    syncUpdate({ teams }); // Sync exactly when typing finishes to avoid lag
                 };
 
                 const removeTeam = (id) => {
@@ -397,56 +774,70 @@
                         showMessage("Mínimo de 2 equipes necessário.");
                         return;
                     }
-                    setTeams(teams.filter(t => t.id !== id));
+                    const newTeams = teams.filter(t => t.id !== id);
+                    setTeams(newTeams);
+                    syncUpdate({ teams: newTeams });
                 };
 
                 return (
-                    <div class="flex flex-col items-center py-16 px-4 min-h-screen bg-zinc-50">
-                        <div class="w-full max-w-lg bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 md:p-10 animate-slide-up">
-                            <div class="w-12 h-12 bg-zinc-100 rounded-2xl flex items-center justify-center text-zinc-600 mb-6">
-                                <i class="fa-solid fa-users-viewfinder text-xl"></i>
+                    <div class="flex flex-col items-center py-20 px-6 min-h-screen relative overflow-hidden">
+                        <div class="ambient-glow bg-futuristic-primary/40 top-0 right-0"></div>
+                        <div class="glass-panel w-full max-w-2xl rounded-[2.5rem] p-10 md:p-14 animate-slide-up">
+                            <div class="w-16 h-16 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-futuristic-primary mb-8 shadow-inner-glow">
+                                <i class="fa-solid fa-users-viewfinder text-2xl drop-shadow-[0_0_10px_rgba(124,92,255,0.5)]"></i>
                             </div>
-                            <h2 class="text-3xl font-bold mb-2 tracking-tight text-zinc-900">Jogadores</h2>
-                            <p class="text-zinc-500 mb-8 text-sm font-medium">Quem vai participar deste desafio hoje?</p>
+                            <h2 class="text-4xl font-bold mb-3 tracking-tight text-white">Jogadores</h2>
+                            <p class="text-futuristic-textSec mb-10 font-medium">Configure as equipes ou participantes.</p>
                             
-                            <div class="space-y-4 mb-8">
+                            <div class="space-y-5 mb-10">
                                 {teams.map((team, index) => (
-                                    <div key={team.id} class="flex items-center gap-3 group">
-                                        <div class="w-10 h-10 rounded-2xl bg-zinc-100 text-zinc-400 font-bold flex items-center justify-center shrink-0 text-sm transition-colors group-focus-within:bg-violet-100 group-focus-within:text-violet-600">
+                                    <div key={team.id} class="flex items-center gap-4 group">
+                                        <div class="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 text-white/50 font-bold flex items-center justify-center shrink-0 transition-all group-focus-within:border-futuristic-primary group-focus-within:text-futuristic-primary group-focus-within:shadow-glow">
                                             {index + 1}
                                         </div>
                                         <input 
                                             type="text" 
                                             value={team.name}
-                                            onChange={(e) => updateTeamName(team.id, e.target.value)}
-                                            class="premium-input flex-1 rounded-2xl px-5 py-3 font-medium text-zinc-800 placeholder-zinc-400"
+                                            onChange={(e) => isHost && updateTeamName(team.id, e.target.value)}
+                                            onBlur={isHost ? handleTeamBlur : undefined}
+                                            readOnly={!isHost}
+                                            class={`premium-input flex-1 rounded-2xl px-6 py-4 font-medium ${!isHost ? 'opacity-70 cursor-not-allowed border-transparent' : ''}`}
                                             placeholder="Nome do jogador/equipe"
                                         />
-                                        <button onClick={() => removeTeam(team.id)} class="w-10 h-10 flex items-center justify-center text-zinc-300 hover:text-rose-500 hover:bg-rose-50 rounded-2xl transition-all" title="Remover">
-                                            <i class="fa-solid fa-xmark"></i>
-                                        </button>
+                                        {isHost && (
+                                            <button onClick={() => removeTeam(team.id)} class="w-12 h-12 flex items-center justify-center text-white/30 hover:text-futuristic-danger hover:bg-futuristic-danger/10 rounded-2xl transition-all" title="Remover">
+                                                <i class="fa-solid fa-xmark text-lg"></i>
+                                            </button>
+                                        )}
                                     </div>
                                 ))}
                             </div>
                             
-                            <div class="flex flex-col gap-4 pt-6 border-t border-zinc-100 mt-2">
-                                <button onClick={addTeam} class="w-full py-4 text-sm font-semibold text-zinc-500 hover:text-zinc-900 bg-zinc-50 hover:bg-zinc-100 rounded-2xl transition-colors flex items-center justify-center gap-2">
-                                    <i class="fa-solid fa-plus text-xs"></i> Adicionar Participante
-                                </button>
-                                
-                                <button 
-                                    onClick={() => {
-                                        if (teams.some(t => t.name.trim() === '')) {
-                                            showMessage("Preencha todos os nomes das equipes.");
-                                            return;
-                                        }
-                                        setGameState('setup_question');
-                                    }}
-                                    class="w-full bg-zinc-900 hover:bg-zinc-800 text-white px-6 py-4 rounded-2xl font-semibold transition-all active:scale-95 flex items-center justify-center gap-2 shadow-md"
-                                >
-                                    Avançar <i class="fa-solid fa-arrow-right"></i>
-                                </button>
-                            </div>
+                            {isHost ? (
+                                <div class="flex flex-col gap-5 pt-8 border-t border-white/10">
+                                    <button onClick={addTeam} class="w-full py-4 text-sm font-semibold text-futuristic-textSec hover:text-white bg-white/5 hover:bg-white/10 border border-white/5 hover:border-white/20 rounded-2xl transition-all flex items-center justify-center gap-2">
+                                        <i class="fa-solid fa-plus text-xs"></i> Adicionar Participante
+                                    </button>
+                                    
+                                    <button 
+                                        onClick={() => {
+                                            if (teams.some(t => t.name.trim() === '')) {
+                                                showMessage("Preencha todos os nomes das equipes.");
+                                                return;
+                                            }
+                                            syncUpdate({ gameState: 'setup_question', teams });
+                                        }}
+                                        class="btn-premium w-full text-white px-6 py-5 rounded-2xl font-bold flex items-center justify-center gap-3 shadow-glow-primary text-lg"
+                                    >
+                                        Avançar <i class="fa-solid fa-arrow-right"></i>
+                                    </button>
+                                </div>
+                            ) : (
+                                <div class="flex flex-col items-center justify-center pt-10 border-t border-white/10 text-center">
+                                    <i class="fa-solid fa-circle-notch fa-spin text-3xl text-futuristic-primary mb-4 shadow-glow-primary rounded-full"></i>
+                                    <p class="text-futuristic-textSec font-bold tracking-widest uppercase text-xs">Aguardando o anfitrião iniciar...</p>
+                                </div>
+                            )}
                         </div>
                     </div>
                 );
@@ -460,16 +851,15 @@
                         pool = pool.filter(q => q.category === selectedCategoryFilter);
                     }
 
+                    let newAvailable = availableQuestions;
+
                     if (pool.length === 0) {
-                        // Restore questions to the pool
                         const missingQuestions = ALL_QUESTIONS.filter(q => 
                             selectedCategoryFilter === 'all' || q.category === selectedCategoryFilter
                         );
                         
                         const currentTexts = new Set(availableQuestions.map(q => q.text));
-                        const newAvailable = [...availableQuestions, ...missingQuestions.filter(q => !currentTexts.has(q.text))];
-                        
-                        setAvailableQuestions(newAvailable);
+                        newAvailable = [...availableQuestions, ...missingQuestions.filter(q => !currentTexts.has(q.text))];
                         pool = missingQuestions;
                         
                         showMessage(
@@ -483,126 +873,160 @@
                     const randomIndex = Math.floor(Math.random() * pool.length);
                     const drawn = pool[randomIndex];
                     
-                    setCurrentQuestion(drawn.text);
-                    setCurrentCategory(drawn.category);
+                    const remainingAvailable = newAvailable.filter(q => q.text !== drawn.text);
                     
-                    // Remove drawn from available list safely using functional state update
-                    setAvailableQuestions(prev => prev.filter(q => q.text !== drawn.text));
+                    // Sincroniza
+                    syncUpdate({
+                        currentQuestion: drawn.text,
+                        currentCategory: drawn.category,
+                        availableQuestions: remainingAvailable
+                    });
+                };
+                
+                const handleQuestionBlur = () => {
+                     syncUpdate({ currentQuestion, currentCategory });
                 };
 
                 return (
-                    <div class="flex flex-col items-center py-12 px-4 min-h-screen bg-zinc-50">
-                        <div class="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 md:p-10 animate-slide-up">
+                    <div class="flex flex-col items-center py-20 px-6 min-h-screen relative overflow-hidden">
+                        <div class="ambient-glow bg-futuristic-secondary/30 top-[10%] left-[10%]"></div>
+                        <div class="glass-panel w-full max-w-3xl rounded-[2.5rem] p-10 md:p-14 animate-slide-up">
                             
-                            <div class="flex justify-between items-start mb-8">
-                                <div>
-                                    <h2 class="text-3xl font-bold mb-2 tracking-tight text-zinc-900">A Grande Pergunta</h2>
-                                    <p class="text-zinc-500 font-medium">Sorteie uma situação ou digite a sua própria decisão.</p>
-                                </div>
-                                <div class="w-12 h-12 bg-violet-100 rounded-2xl flex items-center justify-center text-violet-600 shrink-0">
-                                    <i class="fa-solid fa-compass text-xl"></i>
-                                </div>
-                            </div>
-                            
-                            {/* Toggle Tabs */}
-                            <div class="flex bg-zinc-100 p-1.5 rounded-2xl mb-8">
-                                <button 
-                                    onClick={() => setQuestionInputMode('draw')}
-                                    class={`flex-1 py-3 px-4 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${questionInputMode === 'draw' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700'}`}
-                                >
-                                    <i class="fa-solid fa-dice"></i> Sortear
-                                </button>
-                                <button 
-                                    onClick={() => setQuestionInputMode('custom')}
-                                    class={`flex-1 py-3 px-4 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${questionInputMode === 'custom' ? 'bg-white text-zinc-900 shadow-sm' : 'text-zinc-400 hover:text-zinc-700'}`}
-                                >
-                                    <i class="fa-solid fa-pen"></i> Escrever Própria
-                                </button>
-                            </div>
-                            
-                            {questionInputMode === 'draw' && (
-                                <div class="animate-scale-in">
-                                    {/* Filter by Category */}
-                                    <div class="mb-6 w-full">
-                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest mb-3 pl-1 text-center md:text-left">Filtrar por Assunto</label>
-                                        <div class="relative">
-                                            <select 
-                                                value={selectedCategoryFilter}
-                                                onChange={(e) => setSelectedCategoryFilter(e.target.value)}
-                                                class="premium-input w-full appearance-none rounded-2xl p-4 font-semibold text-zinc-800 cursor-pointer text-center md:text-left md:pl-6"
-                                            >
-                                                <option value="all">🎲 Todos os Assuntos</option>
-                                                {Object.entries(CATEGORIES).map(([key, cat]) => (
-                                                    <option key={key} value={key}>{cat.name}</option>
-                                                ))}
-                                            </select>
-                                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
-                                                <i class="fa-solid fa-chevron-down text-sm"></i>
-                                            </div>
+                            {isHost ? (
+                                <>
+                                    <div class="flex justify-between items-start mb-10">
+                                        <div>
+                                            <h2 class="text-4xl font-bold mb-3 tracking-tight text-white">A Grande Pergunta</h2>
+                                            <p class="text-futuristic-textSec font-medium">Defina a situação a ser analisada.</p>
+                                        </div>
+                                        <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-futuristic-secondary shrink-0 shadow-inner-glow">
+                                            <i class="fa-solid fa-compass text-2xl drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]"></i>
                                         </div>
                                     </div>
-
-                                    {/* Draw Button */}
-                                    <button 
-                                        onClick={handleDrawQuestion}
-                                        class="w-full bg-gradient-to-r from-violet-600 to-indigo-600 hover:from-violet-500 hover:to-indigo-500 text-white p-6 rounded-3xl shadow-float transition-all hover:-translate-y-1 active:scale-95 group relative overflow-hidden mb-6"
-                                    >
-                                        <div class="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
-                                        <div class="relative z-10 flex flex-col items-center justify-center gap-2">
-                                            <i class="fa-solid fa-dice text-3xl mb-1 group-hover:animate-bounce"></i>
-                                            <span class="text-lg font-bold tracking-wide">Sortear Pergunta Aleatória</span>
-                                        </div>
-                                    </button>
-
-                                    {currentQuestion.length > 0 && (
-                                        <div class="bg-violet-50/50 border border-violet-100 rounded-3xl p-6 text-center animate-slide-up">
-                                            <div class="flex justify-center mb-4">
-                                                <CategoryBadge categoryKey={currentCategory} />
+                                    
+                                    <div class="flex bg-black/40 border border-white/5 p-1.5 rounded-2xl mb-10 shadow-inner">
+                                        <button 
+                                            onClick={() => setQuestionInputMode('draw')}
+                                            class={`flex-1 py-3.5 px-4 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${questionInputMode === 'draw' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-white/40 hover:text-white/70'}`}
+                                        >
+                                            <i class="fa-solid fa-dice"></i> Sortear
+                                        </button>
+                                        <button 
+                                            onClick={() => setQuestionInputMode('custom')}
+                                            class={`flex-1 py-3.5 px-4 text-sm font-bold rounded-xl transition-all flex items-center justify-center gap-2 ${questionInputMode === 'custom' ? 'bg-white/10 text-white shadow-sm border border-white/10' : 'text-white/40 hover:text-white/70'}`}
+                                        >
+                                            <i class="fa-solid fa-pen"></i> Escrever Própria
+                                        </button>
+                                    </div>
+                                    
+                                    {questionInputMode === 'draw' && (
+                                        <div class="animate-scale-in">
+                                            <div class="mb-8 w-full">
+                                                <label class="block text-xs font-bold text-futuristic-textSec uppercase tracking-widest mb-4 pl-2 text-center md:text-left">Filtrar por Assunto</label>
+                                                <div class="relative">
+                                                    <select 
+                                                        value={selectedCategoryFilter}
+                                                        onChange={(e) => setSelectedCategoryFilter(e.target.value)}
+                                                        class="premium-input w-full appearance-none rounded-2xl p-5 font-semibold cursor-pointer text-center md:text-left md:pl-6"
+                                                    >
+                                                        <option value="all">🎲 Todos os Assuntos</option>
+                                                        {Object.entries(CATEGORIES).map(([key, cat]) => (
+                                                            <option key={key} value={key}>{cat.name}</option>
+                                                        ))}
+                                                    </select>
+                                                    <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                                                        <i class="fa-solid fa-chevron-down text-sm"></i>
+                                                    </div>
+                                                </div>
                                             </div>
-                                            <p class="text-xl md:text-2xl font-semibold text-zinc-800">{currentQuestion}</p>
+
+                                            <button 
+                                                onClick={handleDrawQuestion}
+                                                class="btn-premium w-full p-6 rounded-3xl transition-all mb-8 shadow-glow-primary border border-white/10"
+                                            >
+                                                <div class="relative z-10 flex flex-col items-center justify-center gap-3">
+                                                    <i class="fa-solid fa-dice text-4xl text-white drop-shadow-[0_0_10px_rgba(255,255,255,0.8)]"></i>
+                                                    <span class="text-xl font-bold tracking-wide text-white">Sortear Pergunta Aleatória</span>
+                                                </div>
+                                            </button>
+
+                                            {currentQuestion.length > 0 && (
+                                                <div class="bg-futuristic-primary/10 border border-futuristic-primary/30 rounded-3xl p-8 text-center animate-slide-up shadow-glow-primary">
+                                                    <div class="flex justify-center mb-5">
+                                                        <CategoryBadge categoryKey={currentCategory} />
+                                                    </div>
+                                                    <p class="text-2xl md:text-3xl font-semibold text-white leading-snug">{currentQuestion}</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
-                                </div>
-                            )}
 
-                            {questionInputMode === 'custom' && (
-                                <div class="animate-scale-in">
-                                    <div class="relative group">
-                                        <textarea 
-                                            value={currentQuestion}
-                                            onChange={(e) => {
-                                                setCurrentQuestion(e.target.value);
-                                                setCurrentCategory(null);
+                                    {questionInputMode === 'custom' && (
+                                        <div class="animate-scale-in">
+                                            <div class="relative group">
+                                                <textarea 
+                                                    value={currentQuestion}
+                                                    onChange={(e) => {
+                                                        setCurrentQuestion(e.target.value);
+                                                        setCurrentCategory(null);
+                                                    }}
+                                                    onBlur={handleQuestionBlur}
+                                                    class="premium-input w-full rounded-3xl p-8 text-2xl font-semibold text-center resize-none min-h-[200px]"
+                                                    placeholder="Ex: Devo mudar de emprego?"
+                                                ></textarea>
+                                                {currentQuestion.length === 0 && (
+                                                    <div class="absolute inset-0 pointer-events-none rounded-3xl border-2 border-dashed border-white/10 group-hover:border-futuristic-primary/50 transition-colors"></div>
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div class="flex justify-between items-center mt-14 pt-8 border-t border-white/10">
+                                        <button onClick={() => syncUpdate({ gameState: 'setup_teams' })} class="text-futuristic-textSec hover:text-white px-4 py-3 font-medium transition-colors flex items-center gap-2">
+                                            <i class="fa-solid fa-arrow-left text-sm"></i> Voltar
+                                        </button>
+                                        <button 
+                                            onClick={() => {
+                                                if (currentQuestion.trim().length < 5) {
+                                                    showMessage("Por favor, insira ou sorteie uma pergunta válida.");
+                                                    return;
+                                                }
+                                                setSelectedTeamId(teams[0].id);
+                                                syncUpdate({ gameState: 'brainstorm', timer: 180, isTimerRunning: false, currentQuestion });
                                             }}
-                                            class="premium-input w-full rounded-3xl p-6 text-xl md:text-2xl font-semibold text-zinc-800 text-center resize-none min-h-[180px]"
-                                            placeholder="Ex: Devo mudar de emprego?"
-                                        ></textarea>
-                                        {currentQuestion.length === 0 && (
-                                            <div class="absolute inset-0 pointer-events-none rounded-3xl border-2 border-dashed border-zinc-200 group-hover:border-violet-300 transition-colors"></div>
-                                        )}
+                                            class="bg-white text-futuristic-bg px-10 py-4 rounded-2xl font-bold transition-all hover:bg-gray-200 active:scale-95 shadow-glow flex items-center gap-3 text-lg"
+                                        >
+                                            Iniciar Reflexão <i class="fa-solid fa-play text-sm"></i>
+                                        </button>
                                     </div>
-                                </div>
-                            )}
+                                </>
+                            ) : (
+                                <>
+                                    <div class="flex justify-between items-start mb-10">
+                                        <div>
+                                            <h2 class="text-4xl font-bold mb-3 tracking-tight text-white">A Grande Pergunta</h2>
+                                            <p class="text-futuristic-textSec font-medium">{currentQuestion ? 'A pergunta foi definida!' : 'Aguardando o anfitrião...'}</p>
+                                        </div>
+                                        <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-futuristic-secondary shrink-0 shadow-inner-glow">
+                                            <i class="fa-solid fa-compass text-2xl drop-shadow-[0_0_10px_rgba(56,189,248,0.5)]"></i>
+                                        </div>
+                                    </div>
 
-                            <div class="flex justify-between items-center mt-12 pt-6 border-t border-zinc-100">
-                                <button onClick={() => setGameState('setup_teams')} class="text-zinc-400 hover:text-zinc-800 px-4 py-2 font-medium transition-colors">
-                                    <i class="fa-solid fa-arrow-left mr-2 text-sm"></i> Voltar
-                                </button>
-                                <button 
-                                    onClick={() => {
-                                        if (currentQuestion.trim().length < 5) {
-                                            showMessage("Por favor, insira ou sorteie uma pergunta válida.");
-                                            return;
-                                        }
-                                        setTimer(180);
-                                        setSelectedTeamId(teams[0].id);
-                                        setGameState('brainstorm');
-                                    }}
-                                    class="bg-zinc-900 hover:bg-zinc-800 text-white px-8 py-4 rounded-2xl font-bold transition-all active:scale-95 shadow-md flex items-center gap-3"
-                                >
-                                    Iniciar Reflexão <i class="fa-solid fa-play text-sm"></i>
-                                </button>
-                            </div>
+                                    {currentQuestion ? (
+                                        <div class="bg-futuristic-primary/10 border border-futuristic-primary/30 rounded-3xl p-10 text-center animate-scale-in shadow-glow-primary mt-8">
+                                            <div class="flex justify-center mb-6">
+                                                <CategoryBadge categoryKey={currentCategory} />
+                                            </div>
+                                            <p class="text-3xl md:text-4xl font-bold text-white leading-snug">{currentQuestion}</p>
+                                        </div>
+                                    ) : (
+                                        <div class="py-16 text-center animate-pulse">
+                                            <i class="fa-solid fa-hourglass-half fa-spin text-5xl text-futuristic-primary/50 mb-6 drop-shadow-md"></i>
+                                            <p class="text-xl text-white/60 font-medium tracking-wide">O anfitrião está definindo a pergunta da rodada...</p>
+                                        </div>
+                                    )}
+                                </>
+                            )}
                         </div>
                     </div>
                 );
@@ -627,7 +1051,9 @@
                         isTop3: false
                     };
                     
-                    setPrinciples([...principles, newPrinciple]);
+                    const updatedPrinciples = [...principles, newPrinciple];
+                    syncUpdate({ principles: updatedPrinciples }); 
+                    
                     setPrincipleText('');
                     setScriptureText('');
                     
@@ -637,111 +1063,124 @@
                 };
 
                 return (
-                    <div class="flex flex-col min-h-screen bg-zinc-50 pb-10">
+                    <div class="flex flex-col min-h-screen pb-10">
                         {/* Sticky Header */}
-                        <div class="glass-header sticky top-0 z-30 px-6 py-4">
-                            <div class="max-w-5xl mx-auto flex flex-col md:flex-row justify-between items-center gap-4">
-                                <div class="flex-1 min-w-0 flex flex-col items-start justify-center gap-1.5">
+                        <div class="glass-header sticky top-0 z-30 px-8 py-5 shadow-soft">
+                            <div class="max-w-[1400px] mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+                                <div class="flex-1 min-w-0 flex flex-col items-start justify-center gap-2">
                                     <CategoryBadge categoryKey={currentCategory} />
-                                    <h2 class="text-lg font-bold text-zinc-800 truncate w-full" title={currentQuestion}>{currentQuestion}</h2>
+                                    <h2 class="text-xl md:text-2xl font-bold text-white truncate w-full" title={currentQuestion}>{currentQuestion}</h2>
                                 </div>
                                 
                                 {/* Timer Pill */}
-                                <div class="flex items-center bg-white border border-zinc-200 rounded-full p-1.5 pr-5 shadow-sm">
+                                <div class="flex items-center bg-white/5 border border-white/10 rounded-full p-2 pr-6 shadow-inner-glow backdrop-blur-md">
                                     <button 
-                                        onClick={() => setIsTimerRunning(!isTimerRunning)}
-                                        class={`w-10 h-10 rounded-full flex items-center justify-center transition-colors ${isTimerRunning ? 'bg-zinc-100 text-zinc-600 hover:bg-zinc-200' : 'bg-zinc-900 text-white hover:bg-zinc-800'}`}
+                                        onClick={() => isHost && toggleTimer()}
+                                        class={`w-12 h-12 rounded-full flex items-center justify-center transition-all ${isTimerRunning ? 'bg-white/10 text-white hover:bg-white/20' : 'bg-futuristic-primary text-white hover:bg-futuristic-primary/80 shadow-glow-primary'} ${!isHost ? 'cursor-default pointer-events-none' : ''}`}
                                     >
-                                        <i class={`fa-solid ${isTimerRunning ? 'fa-pause' : 'fa-play'} text-sm`}></i>
+                                        <i class={`fa-solid ${isTimerRunning ? 'fa-pause' : 'fa-play'} text-lg`}></i>
                                     </button>
-                                    <div class="pl-4 flex items-center gap-2">
-                                        <div class={`w-2 h-2 rounded-full ${isTimerRunning ? 'bg-emerald-500 animate-pulse' : 'bg-zinc-300'}`}></div>
-                                        <span class={`font-mono text-xl font-bold tracking-tight ${timer < 30 ? 'text-rose-500' : 'text-zinc-800'}`}>
-                                            {formatTime(timer)}
+                                    <div class="pl-5 flex items-center gap-3">
+                                        <div class={`w-2.5 h-2.5 rounded-full ${isTimerRunning ? 'bg-futuristic-success animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.8)]' : 'bg-white/30'}`}></div>
+                                        <span class={`font-mono text-2xl font-bold tracking-tight ${localTimer < 30 ? 'text-futuristic-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]' : 'text-white'}`}>
+                                            {formatTime(localTimer)}
                                         </span>
                                     </div>
                                 </div>
                             </div>
                         </div>
 
-                        <div class="flex-1 max-w-5xl w-full mx-auto p-4 md:p-8 flex flex-col lg:flex-row gap-6 lg:gap-10 items-start mt-4">
+                        <div class="flex-1 max-w-[1400px] w-full mx-auto p-6 md:p-8 flex flex-col lg:flex-row gap-8 lg:gap-12 items-start mt-6">
                             
                             {/* Input Form Column */}
-                            <div class="flex-1 w-full bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 md:p-10 animate-slide-up">
-                                <h3 class="text-2xl font-bold mb-8 text-zinc-900 tracking-tight">Novo Princípio</h3>
+                            <div class="flex-1 w-full glass-panel rounded-[2.5rem] p-10 md:p-12 animate-slide-up relative overflow-hidden">
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-futuristic-primary/10 rounded-full blur-[80px] pointer-events-none"></div>
+                                <h3 class="text-3xl font-bold mb-10 text-white tracking-tight flex items-center gap-4">
+                                    <i class="fa-solid fa-pen-nib text-futuristic-primary"></i> Novo Princípio
+                                </h3>
                                 
-                                <form onSubmit={handleAddPrinciple} class="space-y-6">
-                                    <div class="space-y-2">
-                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Vez de</label>
+                                <form onSubmit={handleAddPrinciple} class="space-y-8 relative z-10">
+                                    <div class="space-y-3">
+                                        <label class="block text-xs font-bold text-futuristic-textSec uppercase tracking-widest pl-2">Quem está escrevendo?</label>
                                         <div class="relative">
                                             <select 
                                                 value={currentSelectedTeam} 
                                                 onChange={(e) => setSelectedTeamId(e.target.value)}
-                                                class="premium-input w-full appearance-none rounded-2xl p-4 font-semibold text-zinc-800 cursor-pointer"
+                                                class="premium-input w-full appearance-none rounded-2xl p-5 font-semibold cursor-pointer"
                                             >
                                                 {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
                                             </select>
-                                            <div class="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-zinc-400">
+                                            <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
                                                 <i class="fa-solid fa-chevron-down text-sm"></i>
                                             </div>
                                         </div>
                                     </div>
                                     
-                                    <div class="space-y-2">
-                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">O que a Bíblia ensina?</label>
+                                    <div class="space-y-3">
+                                        <label class="block text-xs font-bold text-futuristic-textSec uppercase tracking-widest pl-2">O que a Bíblia ensina?</label>
                                         <textarea 
                                             value={principleText}
                                             onChange={(e) => setPrincipleText(e.target.value)}
-                                            class="premium-input w-full rounded-2xl p-4 font-medium text-zinc-800 resize-none min-h-[120px]"
+                                            class="premium-input w-full rounded-3xl p-6 font-medium resize-none min-h-[140px] text-lg"
                                             placeholder="Ex: Más companhias estragam bons hábitos."
                                         ></textarea>
                                     </div>
 
-                                    <div class="space-y-2">
-                                        <label class="block text-xs font-bold text-zinc-400 uppercase tracking-widest pl-1">Texto Bíblico (Opcional)</label>
+                                    <div class="space-y-3">
+                                        <label class="block text-xs font-bold text-futuristic-textSec uppercase tracking-widest pl-2">Texto Bíblico (Opcional)</label>
                                         <input 
                                             type="text"
                                             value={scriptureText}
                                             onChange={(e) => setScriptureText(e.target.value)}
-                                            class="premium-input w-full rounded-2xl p-4 font-medium text-zinc-800"
+                                            class="premium-input w-full rounded-2xl p-5 font-medium"
                                             placeholder="Ex: 1 Coríntios 15:33"
                                         />
                                     </div>
 
-                                    <button type="submit" class="w-full bg-violet-50 text-violet-700 hover:bg-violet-600 hover:text-white font-bold py-4 rounded-2xl transition-all active:scale-95 mt-4 border border-violet-100 hover:border-violet-600">
-                                        Adicionar à Pilha
+                                    <button type="submit" class="w-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-futuristic-primary text-white font-bold py-5 rounded-2xl transition-all active:scale-95 mt-6 shadow-sm flex items-center justify-center gap-3">
+                                        Adicionar à Pilha <i class="fa-solid fa-layer-group text-futuristic-secondary"></i>
                                     </button>
                                 </form>
                             </div>
 
                             {/* Status Column */}
-                            <div class="w-full lg:w-[320px] shrink-0 space-y-6">
+                            <div class="w-full lg:w-[380px] shrink-0 space-y-8 animate-slide-up" style={{animationDelay: '0.1s'}}>
                                 {/* Counter Widget */}
-                                <div class="bg-zinc-900 rounded-[2.5rem] shadow-float p-8 text-center text-white relative overflow-hidden">
-                                    <div class="absolute top-0 right-0 w-32 h-32 bg-white/5 rounded-full blur-2xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
-                                    <div class="text-[5rem] font-black tracking-tighter leading-none mb-2">{principles.length}</div>
-                                    <div class="text-xs font-bold text-zinc-400 uppercase tracking-widest">Princípios na Pilha</div>
+                                <div class="glass-panel rounded-[2.5rem] p-10 text-center relative overflow-hidden">
+                                    <div class="absolute inset-0 bg-gradient-to-b from-futuristic-secondary/20 to-transparent opacity-50"></div>
+                                    <div class="relative z-10 flex flex-col items-center">
+                                        <div class="text-[6rem] font-black tracking-tighter leading-none mb-4 text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.3)]">{principles.length}</div>
+                                        <div class="text-xs font-bold text-futuristic-secondary uppercase tracking-widest border border-futuristic-secondary/30 bg-futuristic-secondary/10 px-4 py-2 rounded-full">Princípios na Pilha</div>
+                                    </div>
                                 </div>
                                 
                                 {/* Action Widget */}
-                                <div class="bg-white rounded-[2rem] shadow-soft border border-zinc-100 p-6 text-center">
-                                    <div class="w-10 h-10 bg-zinc-50 rounded-full flex items-center justify-center text-zinc-400 mx-auto mb-4">
-                                        <i class="fa-solid fa-layer-group"></i>
+                                <div class="glass-panel rounded-[2.5rem] p-8 text-center flex flex-col justify-between">
+                                    <div>
+                                        <div class="w-14 h-14 bg-white/5 border border-white/10 rounded-2xl flex items-center justify-center text-white/50 mx-auto mb-6 shadow-inner-glow">
+                                            <i class="fa-solid fa-brain text-xl"></i>
+                                        </div>
+                                        <p class="text-futuristic-textSec mb-8 font-medium leading-relaxed">Pensem na maior quantidade possível de princípios relacionados antes de organizar.</p>
                                     </div>
-                                    <p class="text-sm text-zinc-500 mb-6 font-medium leading-relaxed">Pensem na maior quantidade possível de princípios relacionados.</p>
-                                    <button 
-                                        onClick={() => {
-                                            if(principles.length === 0) {
-                                                showMessage("Adicione pelo menos um princípio para continuar.", "warning");
-                                                return;
-                                            }
-                                            setIsTimerRunning(false);
-                                            setGameState('sorting');
-                                        }}
-                                        class="w-full bg-white border-2 border-zinc-200 hover:border-zinc-900 text-zinc-900 font-bold py-3 px-4 rounded-2xl transition-all active:scale-95"
-                                    >
-                                        Classificar
-                                    </button>
+                                    {isHost ? (
+                                        <button 
+                                            onClick={() => {
+                                                if(principles.length === 0) {
+                                                    showMessage("Adicione pelo menos um princípio para continuar.", "warning");
+                                                    return;
+                                                }
+                                                syncUpdate({ gameState: 'sorting', isTimerRunning: false, timer: localTimer });
+                                            }}
+                                            class="btn-premium w-full text-white font-bold py-5 px-6 rounded-2xl transition-all shadow-glow-primary flex items-center justify-center gap-3"
+                                        >
+                                            Iniciar Triagem <i class="fa-solid fa-arrow-right-arrow-left"></i>
+                                        </button>
+                                    ) : (
+                                        <div class="bg-white/5 border border-white/10 rounded-2xl py-4 px-6 text-center shadow-inner-glow mt-4">
+                                            <i class="fa-solid fa-circle-notch fa-spin text-futuristic-primary mb-3 text-2xl"></i>
+                                            <p class="text-[10px] text-futuristic-textSec font-bold uppercase tracking-widest">Aguardando o anfitrião prosseguir</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -755,102 +1194,100 @@
                 const nao = principles.filter(p => p.category === 'nao');
                 const depende = principles.filter(p => p.category === 'depende');
 
-                const currentTeam = teams[currentTurnIndex];
-
                 const drawNextPrinciple = () => {
                     if (pool.length > 0) {
                         const randomIndex = Math.floor(Math.random() * pool.length);
-                        setActivePrinciple(pool[randomIndex]);
+                        syncUpdate({ activePrinciple: pool[randomIndex] });
                     }
                 };
 
                 const categorizeActive = (category) => {
                     if (!activePrinciple) return;
-                    setPrinciples(principles.map(p => 
+                    const updatedPrinciples = principles.map(p => 
                         p.id === activePrinciple.id ? { ...p, category: category } : p
-                    ));
-                    setActivePrinciple(null);
-                    setCurrentTurnIndex((currentTurnIndex + 1) % teams.length);
+                    );
+                    syncUpdate({ principles: updatedPrinciples, activePrinciple: null });
                 };
 
                 const getTeamName = (id) => teams.find(t => t.id === id)?.name || 'Desconhecido';
 
                 return (
-                    <div class="flex flex-col min-h-screen bg-zinc-50">
+                    <div class="flex flex-col min-h-screen pb-6">
                         {/* Header */}
-                        <div class="glass-header sticky top-0 z-10 px-4 py-4 flex flex-col items-center border-b border-zinc-200 gap-2">
+                        <div class="glass-header sticky top-0 z-20 px-6 py-5 flex flex-col items-center border-b border-white/10 gap-3 shadow-soft">
                             <CategoryBadge categoryKey={currentCategory} />
-                            <h2 class="text-lg md:text-xl font-bold text-zinc-800 text-center max-w-3xl line-clamp-1" title={currentQuestion}>{currentQuestion}</h2>
+                            <h2 class="text-xl md:text-2xl font-bold text-white text-center max-w-4xl line-clamp-1" title={currentQuestion}>{currentQuestion}</h2>
                         </div>
 
                         {/* Main Board */}
-                        <div class="flex-1 p-4 md:p-6 flex flex-col lg:flex-row gap-6 max-w-[1400px] mx-auto w-full h-full">
+                        <div class="flex-1 p-6 md:p-8 flex flex-col xl:flex-row gap-8 max-w-[1600px] mx-auto w-full h-full">
                             
                             {/* Action Area */}
-                            <div class="w-full lg:w-[400px] flex flex-col gap-4">
-                                {/* Card Area */}
-                                <div class="flex-1 bg-white rounded-[2.5rem] shadow-soft border border-zinc-100 p-8 flex flex-col items-center justify-center min-h-[400px] relative">
+                            <div class="w-full xl:w-[480px] flex flex-col gap-6">
+                                <div class="flex-1 glass-panel rounded-[2.5rem] p-10 flex flex-col items-center justify-center min-h-[500px] relative overflow-hidden">
+                                    <div class="absolute top-[-20%] left-[-20%] w-[50%] h-[50%] bg-futuristic-primary/20 blur-[100px] pointer-events-none"></div>
                                     
                                     {!activePrinciple && pool.length > 0 && (
-                                        <div class="text-center flex flex-col items-center h-full justify-center w-full animate-scale-in">
-                                            {/* Beautiful CSS Deck */}
-                                            <div class="relative mb-10 w-36 h-48 cursor-pointer group" onClick={drawNextPrinciple}>
-                                                <div class="absolute inset-0 bg-white border border-zinc-200 rounded-2xl shadow-sm rotate-6 group-hover:rotate-12 transition-transform duration-500 origin-bottom-right"></div>
-                                                <div class="absolute inset-0 bg-white border border-zinc-200 rounded-2xl shadow-sm -rotate-3 group-hover:-rotate-6 transition-transform duration-500 origin-bottom-left"></div>
-                                                <div class="absolute inset-0 bg-zinc-900 border border-zinc-800 rounded-2xl shadow-float flex flex-col items-center justify-center text-white transition-transform duration-300 group-hover:-translate-y-4">
-                                                    <i class="fa-brands fa-buffer text-4xl mb-2 opacity-80"></i>
-                                                    <span class="text-sm font-bold opacity-50 uppercase tracking-widest text-[10px]">Comprar</span>
+                                        <div class="text-center flex flex-col items-center h-full justify-center w-full animate-scale-in relative z-10">
+                                            {/* Futuristic Card Deck */}
+                                            <div class="relative mb-12 w-48 h-64 cursor-pointer group" onClick={drawNextPrinciple}>
+                                                <div class="absolute inset-0 bg-white/5 border border-white/10 rounded-3xl shadow-soft rotate-6 group-hover:rotate-12 transition-transform duration-500 origin-bottom-right backdrop-blur-sm"></div>
+                                                <div class="absolute inset-0 bg-white/5 border border-white/10 rounded-3xl shadow-soft -rotate-3 group-hover:-rotate-6 transition-transform duration-500 origin-bottom-left backdrop-blur-sm"></div>
+                                                <div class="absolute inset-0 bg-gradient-to-br from-[#1E293B] to-[#0F172A] border border-white/20 rounded-3xl shadow-float flex flex-col items-center justify-center text-white transition-all duration-300 group-hover:-translate-y-6 hover:shadow-glow-primary">
+                                                    <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 rounded-3xl mix-blend-overlay"></div>
+                                                    <i class="fa-brands fa-buffer text-6xl mb-4 text-futuristic-primary drop-shadow-[0_0_15px_rgba(124,92,255,0.8)]"></i>
+                                                    <span class="text-xs font-bold text-white/50 uppercase tracking-widest">Revelar</span>
                                                 </div>
                                             </div>
-                                            <p class="text-zinc-400 font-bold text-sm uppercase tracking-widest mb-6">Restam {pool.length}</p>
+                                            <div class="flex items-center gap-3 mb-8">
+                                                <div class="w-2 h-2 rounded-full bg-futuristic-secondary animate-pulse shadow-[0_0_8px_#38BDF8]"></div>
+                                                <p class="text-white/60 font-bold text-sm uppercase tracking-widest">Restam {pool.length}</p>
+                                            </div>
                                             <button 
                                                 onClick={drawNextPrinciple}
-                                                class="bg-zinc-100 hover:bg-zinc-200 text-zinc-900 font-bold py-4 px-8 rounded-full transition-all active:scale-95 w-full text-sm shadow-sm"
+                                                class="btn-premium text-white font-bold py-5 px-10 rounded-2xl transition-all w-full text-base shadow-glow-primary"
                                             >
-                                                Revelar Próximo
+                                                Revelar Próximo <i class="fa-solid fa-arrow-up-right-from-square ml-2"></i>
                                             </button>
                                         </div>
                                     )}
 
                                     {activePrinciple && (
-                                        <div class="w-full h-full flex flex-col animate-slide-up">
-                                            <div class="flex-1 relative">
-                                                {/* Active Card Styling */}
-                                                <div class="absolute inset-0 bg-white border-2 border-violet-100 shadow-[0_20px_50px_-12px_rgba(139,92,246,0.15)] rounded-3xl p-8 flex flex-col justify-center">
-                                                    <div class="absolute top-6 left-6 text-violet-200 text-4xl opacity-50">
+                                        <div class="w-full h-full flex flex-col animate-slide-up relative z-10">
+                                            <div class="flex-1 relative mb-8">
+                                                {/* Futuristic Active Card */}
+                                                <div class="absolute inset-0 bg-gradient-to-br from-[rgba(255,255,255,0.08)] to-[rgba(255,255,255,0.02)] backdrop-blur-2xl border border-white/20 shadow-[0_20px_50px_-12px_rgba(124,92,255,0.3)] rounded-[2rem] p-10 flex flex-col justify-center">
+                                                    <div class="absolute top-8 left-8 text-futuristic-primary/30 text-5xl">
                                                         <i class="fa-solid fa-quote-left"></i>
                                                     </div>
-                                                    <p class="text-xl lg:text-2xl font-semibold text-zinc-800 text-center mb-6 leading-tight relative z-10">
+                                                    <p class="text-2xl md:text-3xl font-semibold text-white text-center mb-8 leading-snug relative z-10 drop-shadow-md">
                                                         {activePrinciple.text}
                                                     </p>
                                                     {activePrinciple.scripture && (
-                                                        <div class="bg-violet-50 text-violet-700 py-2 px-4 rounded-xl text-center font-bold text-sm mx-auto shadow-sm">
-                                                            {activePrinciple.scripture}
+                                                        <div class="bg-futuristic-primary/10 border border-futuristic-primary/30 text-futuristic-secondary py-2.5 px-5 rounded-xl text-center font-bold text-sm mx-auto shadow-inner-glow">
+                                                            <i class="fa-solid fa-book-bible mr-2 opacity-70"></i>{activePrinciple.scripture}
                                                         </div>
                                                     )}
-                                                    <div class="absolute bottom-6 left-0 w-full text-center text-[10px] uppercase font-bold tracking-widest text-zinc-300">
-                                                        Por {getTeamName(activePrinciple.teamId)}
+                                                    <div class="absolute bottom-6 w-full left-0 text-center text-[10px] uppercase font-bold tracking-widest text-white/30 flex justify-center items-center gap-2">
+                                                        <span class="w-1 h-1 rounded-full bg-white/20"></span> Por {getTeamName(activePrinciple.teamId)} <span class="w-1 h-1 rounded-full bg-white/20"></span>
                                                     </div>
                                                 </div>
                                             </div>
                                             
-                                            <div class="mt-8 pt-6 border-t border-zinc-100">
-                                                <p class="text-center text-[10px] font-bold text-zinc-400 mb-4 uppercase tracking-widest">Decisão de Destino</p>
-                                                <div class="grid grid-cols-3 gap-3">
-                                                    <button onClick={() => categorizeActive('sim')} class="group relative overflow-hidden bg-white border border-emerald-200 hover:border-emerald-500 text-emerald-700 py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
-                                                        <div class="absolute inset-0 bg-emerald-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                        <i class="fa-solid fa-check text-xl relative z-10"></i>
-                                                        <span class="text-xs relative z-10">Sim</span>
+                                            <div class="pt-6 border-t border-white/10">
+                                                <p class="text-center text-[10px] font-bold text-futuristic-textSec mb-5 uppercase tracking-widest">Classificar em</p>
+                                                <div class="grid grid-cols-3 gap-4">
+                                                    <button onClick={() => categorizeActive('sim')} class="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-futuristic-success text-white py-5 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all hover:bg-futuristic-success/10 hover:shadow-glow-success active:scale-95">
+                                                        <i class="fa-solid fa-check text-2xl text-futuristic-success drop-shadow-[0_0_8px_rgba(16,185,129,0.8)]"></i>
+                                                        <span class="text-xs uppercase tracking-widest">Sim</span>
                                                     </button>
-                                                    <button onClick={() => categorizeActive('depende')} class="group relative overflow-hidden bg-white border border-amber-200 hover:border-amber-500 text-amber-700 py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
-                                                        <div class="absolute inset-0 bg-amber-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                        <i class="fa-solid fa-scale-unbalanced text-xl relative z-10"></i>
-                                                        <span class="text-xs relative z-10">Depende</span>
+                                                    <button onClick={() => categorizeActive('depende')} class="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-futuristic-warning text-white py-5 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all hover:bg-futuristic-warning/10 hover:shadow-[0_0_30px_-5px_rgba(245,158,11,0.4)] active:scale-95">
+                                                        <i class="fa-solid fa-scale-unbalanced text-2xl text-futuristic-warning drop-shadow-[0_0_8px_rgba(245,158,11,0.8)]"></i>
+                                                        <span class="text-xs uppercase tracking-widest">Depende</span>
                                                     </button>
-                                                    <button onClick={() => categorizeActive('nao')} class="group relative overflow-hidden bg-white border border-rose-200 hover:border-rose-500 text-rose-700 py-4 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all active:scale-95 shadow-sm">
-                                                        <div class="absolute inset-0 bg-rose-50 opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                                                        <i class="fa-solid fa-xmark text-xl relative z-10"></i>
-                                                        <span class="text-xs relative z-10">Não</span>
+                                                    <button onClick={() => categorizeActive('nao')} class="group relative overflow-hidden bg-white/5 border border-white/10 hover:border-futuristic-danger text-white py-5 rounded-2xl font-bold flex flex-col items-center justify-center gap-2 transition-all hover:bg-futuristic-danger/10 hover:shadow-glow-danger active:scale-95">
+                                                        <i class="fa-solid fa-xmark text-2xl text-futuristic-danger drop-shadow-[0_0_8px_rgba(239,68,68,0.8)]"></i>
+                                                        <span class="text-xs uppercase tracking-widest">Não</span>
                                                     </button>
                                                 </div>
                                             </div>
@@ -858,28 +1295,37 @@
                                     )}
 
                                     {!activePrinciple && pool.length === 0 && (
-                                        <div class="text-center flex flex-col items-center justify-center h-full animate-scale-in">
-                                            <div class="w-20 h-20 bg-emerald-50 text-emerald-500 rounded-full flex items-center justify-center text-4xl mb-6 shadow-sm border border-emerald-100">
-                                                <i class="fa-solid fa-check"></i>
+                                        <div class="text-center flex flex-col items-center justify-center h-full animate-scale-in relative z-10 w-full">
+                                            <div class="w-24 h-24 bg-futuristic-success/10 text-futuristic-success border border-futuristic-success/30 rounded-full flex items-center justify-center text-5xl mb-8 shadow-glow-success relative">
+                                                <div class="absolute inset-0 bg-futuristic-success/20 blur-xl rounded-full"></div>
+                                                <i class="fa-solid fa-check relative z-10"></i>
                                             </div>
-                                            <h3 class="text-2xl font-bold text-zinc-900 mb-2">Concluído!</h3>
-                                            <p class="text-zinc-500 mb-8 font-medium">Todos os princípios foram alocados.</p>
-                                            <button 
-                                                onClick={() => setGameState('top3')}
-                                                class="bg-zinc-900 hover:bg-zinc-800 text-white font-bold py-4 px-8 rounded-full shadow-float transition-all active:scale-95 w-full flex items-center justify-center gap-2"
-                                            >
-                                                Ver Decisivos <i class="fa-solid fa-arrow-right"></i>
-                                            </button>
+                                            <h3 class="text-3xl font-bold text-white mb-3">Triagem Concluída</h3>
+                                            <p class="text-futuristic-textSec mb-10 font-medium">Todos os princípios foram alocados.</p>
+                                            
+                                            {isHost ? (
+                                                <button 
+                                                    onClick={() => syncUpdate({ gameState: 'top3' })}
+                                                    class="btn-premium text-white font-bold py-5 px-10 rounded-2xl shadow-glow-primary transition-all active:scale-95 w-full flex items-center justify-center gap-3 text-lg"
+                                                >
+                                                    Avançar para Decisão <i class="fa-solid fa-arrow-right"></i>
+                                                </button>
+                                            ) : (
+                                                <div class="bg-white/5 border border-white/10 rounded-2xl py-4 px-8 inline-flex flex-col items-center shadow-inner-glow mt-4">
+                                                    <i class="fa-solid fa-spinner fa-spin text-futuristic-primary mb-2 text-xl"></i>
+                                                    <p class="text-[10px] text-futuristic-textSec font-bold uppercase tracking-widest">Aguardando o anfitrião</p>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
                                 </div>
                             </div>
 
                             {/* Sorted Columns Area */}
-                            <div class="flex-1 flex gap-4 overflow-x-auto pb-4">
-                                <Column title="Sim" items={sim} colorClass="emerald" icon="fa-check text-emerald-500" getTeamName={getTeamName} />
-                                <Column title="Depende" items={depende} colorClass="amber" icon="fa-scale-unbalanced text-amber-500" getTeamName={getTeamName} />
-                                <Column title="Não" items={nao} colorClass="rose" icon="fa-xmark text-rose-500" getTeamName={getTeamName} />
+                            <div class="flex-1 flex gap-6 overflow-x-auto pb-4">
+                                <Column title="Sim" items={sim} colorClass="emerald" icon="fa-check text-futuristic-success drop-shadow-[0_0_5px_rgba(16,185,129,0.8)]" getTeamName={getTeamName} />
+                                <Column title="Depende" items={depende} colorClass="amber" icon="fa-scale-unbalanced text-futuristic-warning drop-shadow-[0_0_5px_rgba(245,158,11,0.8)]" getTeamName={getTeamName} />
+                                <Column title="Não" items={nao} colorClass="rose" icon="fa-xmark text-futuristic-danger drop-shadow-[0_0_5px_rgba(239,68,68,0.8)]" getTeamName={getTeamName} />
                             </div>
                         </div>
                     </div>
@@ -896,54 +1342,60 @@
                         showMessage("Máximo de 3 princípios alcançado.", "warning");
                         return;
                     }
-                    setPrinciples(principles.map(p => 
+                    const updatedPrinciples = principles.map(p => 
                         p.id === id ? { ...p, isTop3: !p.isTop3 } : p
-                    ));
+                    );
+                    syncUpdate({ principles: updatedPrinciples });
                 };
 
-                // Premium Dark Mode aesthetic just for this view
                 return (
-                    <div class="min-h-screen bg-zinc-950 flex flex-col py-10 px-4 text-zinc-100 selection:bg-zinc-700 font-sans">
-                        <div class="max-w-6xl mx-auto w-full flex-1 flex flex-col">
+                    <div class="min-h-screen flex flex-col py-12 px-6">
+                        <div class="max-w-[1400px] mx-auto w-full flex-1 flex flex-col relative z-10">
                             
-                            <div class="text-center mb-10 animate-slide-up">
-                                <h2 class="text-4xl font-extrabold mb-3 tracking-tight text-white">Área Prata</h2>
-                                <p class="text-zinc-400 font-medium max-w-xl mx-auto">Dos princípios classificados, escolha os 3 que possuem o maior peso e fornecem a melhor direção.</p>
-                                <div class="mt-6 inline-flex items-center gap-3 bg-zinc-900 border border-zinc-800 rounded-full px-5 py-2">
-                                    <span class="font-mono font-bold text-lg text-white">{top3Count}</span>
-                                    <span class="text-xs font-bold text-zinc-500 uppercase tracking-widest border-l border-zinc-700 pl-3">de 3 Selecionados</span>
+                            <div class="text-center mb-12 animate-slide-up">
+                                <h2 class="text-5xl font-extrabold mb-4 tracking-tight text-white bg-clip-text text-transparent bg-gradient-to-r from-white to-white/70">Melhores Princípios</h2>
+                                <p class="text-futuristic-textSec font-medium max-w-2xl mx-auto text-lg">Selecione os 3 princípios de maior peso que guiarão a decisão final.</p>
+                                <div class="mt-8 inline-flex items-center gap-4 bg-white/5 border border-white/10 shadow-inner-glow rounded-full px-6 py-2.5 backdrop-blur-md">
+                                    <span class="font-mono font-bold text-2xl text-futuristic-primary drop-shadow-[0_0_8px_rgba(124,92,255,0.8)]">{top3Count}</span>
+                                    <span class="text-xs font-bold text-white/50 uppercase tracking-widest border-l border-white/10 pl-4">de 3 Selecionados</span>
                                 </div>
                             </div>
 
-                            <div class="flex-1 flex flex-col lg:flex-row gap-8 overflow-hidden h-full">
+                            <div class="flex-1 flex flex-col lg:flex-row gap-10 overflow-hidden h-full">
                                 
                                 {/* Pool of Sorted */}
-                                <div class="flex-1 bg-zinc-900/50 rounded-[2.5rem] p-6 lg:p-8 overflow-y-auto custom-scrollbar border border-zinc-800 flex flex-col">
-                                    <h3 class="text-xs font-bold uppercase tracking-widest text-zinc-500 mb-6 px-2">Princípios Analisados</h3>
-                                    <div class="grid gap-3 flex-1">
+                                <div class="flex-1 glass-panel rounded-[2.5rem] p-8 lg:p-10 overflow-y-auto custom-scrollbar flex flex-col">
+                                    <h3 class="text-xs font-bold uppercase tracking-widest text-white/40 mb-8 flex items-center gap-3">
+                                        <i class="fa-solid fa-list-check"></i> Princípios Triados
+                                    </h3>
+                                    <div class="grid gap-4 flex-1">
                                         {sortedPrinciples.map(p => {
                                             const isSelected = p.isTop3;
-                                            // subtle color hints
-                                            let catColor = 'bg-zinc-800 hover:bg-zinc-700 border-zinc-700/50';
-                                            if (p.category === 'sim') catColor = 'bg-emerald-900/20 hover:bg-emerald-900/40 border-emerald-900/30';
-                                            if (p.category === 'nao') catColor = 'bg-rose-900/20 hover:bg-rose-900/40 border-rose-900/30';
-                                            if (p.category === 'depende') catColor = 'bg-amber-900/20 hover:bg-amber-900/40 border-amber-900/30';
+                                            let catStyle = 'border-white/10 hover:border-white/30';
+                                            let dotColor = 'bg-white/30';
+                                            if (p.category === 'sim') { catStyle = 'border-futuristic-success/30 hover:border-futuristic-success bg-futuristic-success/5'; dotColor = 'bg-futuristic-success shadow-[0_0_8px_rgba(16,185,129,0.8)]'; }
+                                            if (p.category === 'nao') { catStyle = 'border-futuristic-danger/30 hover:border-futuristic-danger bg-futuristic-danger/5'; dotColor = 'bg-futuristic-danger shadow-[0_0_8px_rgba(239,68,68,0.8)]'; }
+                                            if (p.category === 'depende') { catStyle = 'border-futuristic-warning/30 hover:border-futuristic-warning bg-futuristic-warning/5'; dotColor = 'bg-futuristic-warning shadow-[0_0_8px_rgba(245,158,11,0.8)]'; }
 
                                             return (
                                                 <div 
                                                     key={p.id} 
                                                     onClick={() => toggleTop3(p.id)}
-                                                    class={`cursor-pointer p-5 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-4 
-                                                        ${isSelected ? 'opacity-40 scale-[0.98] grayscale border-transparent bg-zinc-900' : `${catColor} shadow-md`}`}
+                                                    class={`cursor-pointer p-6 rounded-2xl border transition-all duration-300 flex items-center justify-between gap-5 backdrop-blur-sm
+                                                        ${isSelected ? 'opacity-30 scale-[0.98] border-white/5 bg-black/40' : `bg-white/5 hover:bg-white/10 shadow-sm hover:shadow-[0_5px_20px_rgba(0,0,0,0.3)] ${catStyle}`}`}
                                                 >
                                                     <div class="flex-1 min-w-0">
-                                                        <p class="font-medium text-sm leading-relaxed text-zinc-200">{p.text}</p>
-                                                        {p.scripture && <p class="text-xs text-zinc-500 font-bold mt-2"><i class="fa-solid fa-book-open text-[10px] mr-1 opacity-70"></i>{p.scripture}</p>}
+                                                        <div class="flex items-center gap-3 mb-2">
+                                                            <span class={`w-2 h-2 rounded-full ${dotColor}`}></span>
+                                                            <span class="text-[9px] uppercase tracking-widest font-bold text-white/40">{p.category}</span>
+                                                        </div>
+                                                        <p class="font-medium text-base leading-relaxed text-white/90">{p.text}</p>
+                                                        {p.scripture && <p class="text-xs text-futuristic-secondary font-bold mt-2 flex items-center gap-1.5"><i class="fa-solid fa-book-open opacity-50 text-[10px]"></i>{p.scripture}</p>}
                                                     </div>
-                                                    <div class={`shrink-0 w-6 h-6 rounded-full border-2 flex items-center justify-center transition-colors
-                                                        ${isSelected ? 'border-zinc-500 bg-zinc-500 text-zinc-900' : 'border-zinc-600'}`}
+                                                    <div class={`shrink-0 w-8 h-8 rounded-full border-2 flex items-center justify-center transition-all
+                                                        ${isSelected ? 'border-futuristic-primary bg-futuristic-primary text-white shadow-glow-primary' : 'border-white/20'}`}
                                                     >
-                                                        {isSelected && <i class="fa-solid fa-check text-xs"></i>}
+                                                        {isSelected && <i class="fa-solid fa-check text-sm"></i>}
                                                     </div>
                                                 </div>
                                             );
@@ -952,40 +1404,40 @@
                                 </div>
 
                                 {/* Premium Silver Area Display */}
-                                <div class="flex-1 flex flex-col gap-6">
-                                    <div class="relative overflow-hidden bg-gradient-to-br from-zinc-200 via-zinc-300 to-zinc-400 rounded-[2.5rem] p-8 lg:p-10 shadow-[0_20px_50px_-12px_rgba(255,255,255,0.1)] flex-1 flex flex-col">
+                                <div class="flex-1 flex flex-col gap-8">
+                                    <div class="relative overflow-hidden bg-gradient-to-br from-zinc-800 to-zinc-950 border border-white/20 rounded-[2.5rem] p-10 shadow-[0_20px_50px_-12px_rgba(255,255,255,0.05)] flex-1 flex flex-col">
                                         
-                                        {/* Metallic Shine effect */}
-                                        <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent -translate-x-full animate-[shimmer_3s_infinite]"></div>
+                                        {/* Premium Shimmer */}
+                                        <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/5 to-transparent -translate-x-full animate-[shimmer_4s_infinite]"></div>
                                         <style>{`@keyframes shimmer { 100% { transform: translateX(100%); } }`}</style>
                                         
-                                        <div class="absolute top-6 right-6 text-zinc-500/20 text-7xl drop-shadow-md">
+                                        <div class="absolute top-8 right-8 text-white/5 text-8xl drop-shadow-md">
                                             <i class="fa-solid fa-trophy"></i>
                                         </div>
 
                                         <div class="relative z-10 flex flex-col h-full">
-                                            <h3 class="text-sm font-bold mb-8 text-zinc-600 uppercase tracking-widest border-b border-zinc-400/30 pb-4">
-                                                Fatores Decisivos
+                                            <h3 class="text-sm font-bold mb-10 text-white/50 uppercase tracking-widest border-b border-white/10 pb-5 flex items-center gap-3">
+                                                <i class="fa-solid fa-ranking-star"></i> Fatores Decisivos
                                             </h3>
                                             
-                                            <div class="flex-1 flex flex-col gap-4 justify-center">
+                                            <div class="flex-1 flex flex-col gap-5 justify-center">
                                                 {principles.filter(p => p.isTop3).length === 0 && (
-                                                    <div class="text-center flex flex-col items-center justify-center h-full">
-                                                        <div class="w-16 h-16 border-2 border-dashed border-zinc-400 rounded-full flex items-center justify-center mb-4 text-zinc-400">
-                                                            <i class="fa-solid fa-plus text-xl"></i>
+                                                    <div class="text-center flex flex-col items-center justify-center h-full opacity-60">
+                                                        <div class="w-20 h-20 border-2 border-dashed border-white/20 rounded-full flex items-center justify-center mb-6 text-white/30">
+                                                            <i class="fa-solid fa-plus text-3xl"></i>
                                                         </div>
-                                                        <p class="text-zinc-600 font-medium text-sm">Selecione ao lado os princípios mais importantes.</p>
+                                                        <p class="text-white/60 font-medium text-base">Selecione ao lado os princípios mais essenciais.</p>
                                                     </div>
                                                 )}
                                                 
                                                 {principles.filter(p => p.isTop3).map((p, idx) => (
-                                                    <div key={p.id} class="bg-white/80 backdrop-blur-md rounded-2xl p-5 shadow-sm border border-white/50 flex gap-4 items-start animate-slide-up hover:scale-[1.02] transition-transform">
-                                                        <div class="w-8 h-8 rounded-full bg-zinc-900 text-white flex items-center justify-center font-bold text-sm shrink-0 shadow-sm mt-0.5">
+                                                    <div key={p.id} class="bg-white/10 backdrop-blur-xl rounded-2xl p-6 shadow-[0_8px_32px_rgba(0,0,0,0.3)] border border-white/20 flex gap-5 items-start animate-slide-up hover:-translate-y-1 transition-transform">
+                                                        <div class="w-10 h-10 rounded-full bg-gradient-to-br from-futuristic-primary to-futuristic-secondary text-white flex items-center justify-center font-black text-lg shrink-0 shadow-glow-primary mt-1">
                                                             {idx + 1}
                                                         </div>
                                                         <div>
-                                                            <p class="font-bold text-zinc-800 text-sm md:text-base leading-snug mb-1">{p.text}</p>
-                                                            {p.scripture && <p class="text-[11px] font-bold text-zinc-500 uppercase tracking-wide">{p.scripture}</p>}
+                                                            <p class="font-bold text-white text-lg leading-snug mb-2">{p.text}</p>
+                                                            {p.scripture && <p class="text-xs font-bold text-futuristic-secondary uppercase tracking-widest">{p.scripture}</p>}
                                                         </div>
                                                     </div>
                                                 ))}
@@ -993,14 +1445,21 @@
                                         </div>
                                     </div>
                                     
-                                    <button 
-                                        onClick={() => setGameState('result')}
-                                        disabled={top3Count === 0}
-                                        class={`py-5 rounded-full font-bold text-lg transition-all flex justify-center items-center gap-2
-                                            ${top3Count > 0 ? 'bg-white text-zinc-900 hover:bg-zinc-100 shadow-glow active:scale-95' : 'bg-zinc-900 text-zinc-600 cursor-not-allowed border border-zinc-800'}`}
-                                    >
-                                        Finalizar Reflexão <i class="fa-solid fa-flag-checkered text-sm"></i>
-                                    </button>
+                                    {isHost ? (
+                                        <button 
+                                            onClick={() => syncUpdate({ gameState: 'result' })}
+                                            disabled={top3Count === 0}
+                                            class={`py-6 rounded-2xl font-bold text-lg transition-all flex justify-center items-center gap-3
+                                                ${top3Count > 0 ? 'btn-premium text-white shadow-glow-primary active:scale-95' : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'}`}
+                                        >
+                                            Gerar Relatório Final <i class="fa-solid fa-file-contract text-lg"></i>
+                                        </button>
+                                    ) : (
+                                        <div class="bg-black/20 border border-white/5 rounded-2xl py-6 flex flex-col items-center justify-center mt-auto shadow-inner">
+                                            <i class="fa-solid fa-circle-notch fa-spin text-futuristic-primary mb-3 text-2xl"></i>
+                                            <p class="text-[10px] text-futuristic-textSec font-bold uppercase tracking-widest">Aguardando finalização do anfitrião</p>
+                                        </div>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -1013,47 +1472,55 @@
                 const getTeamName = (id) => teams.find(t => t.id === id)?.name || 'Desconhecido';
                 
                 return (
-                    <div class="min-h-screen bg-zinc-50 py-16 px-4 flex flex-col items-center justify-center bg-pattern">
-                        <div class="w-full max-w-2xl bg-white rounded-[2.5rem] shadow-float overflow-hidden border border-zinc-100 animate-slide-up">
+                    <div class="min-h-screen py-20 px-6 flex flex-col items-center justify-center">
+                        <div class="w-full max-w-3xl glass-panel rounded-[2.5rem] shadow-[0_20px_50px_-10px_rgba(0,0,0,0.8)] overflow-hidden animate-slide-up relative z-10 border border-white/20">
                             
-                            {/* Header / Report Look */}
-                            <div class="bg-zinc-900 p-10 text-center text-white relative overflow-hidden">
-                                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10 mix-blend-overlay"></div>
+                            {/* Premium Header */}
+                            <div class="bg-gradient-to-br from-[#1E293B] to-[#050816] p-12 text-center relative overflow-hidden border-b border-white/10">
+                                <div class="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03] mix-blend-overlay"></div>
+                                <div class="absolute top-0 right-0 w-64 h-64 bg-futuristic-primary/20 blur-[100px]"></div>
                                 <div class="relative z-10 flex flex-col items-center">
-                                    <div class="mb-6">
+                                    <div class="mb-8">
                                         <CategoryBadge categoryKey={currentCategory} />
                                     </div>
-                                    <h1 class="text-2xl md:text-3xl font-bold leading-tight mb-4 text-white">"{currentQuestion}"</h1>
+                                    <h1 class="text-3xl md:text-4xl font-extrabold leading-snug mb-0 text-white drop-shadow-md">"{currentQuestion}"</h1>
                                 </div>
                             </div>
 
-                            {/* Content */}
-                            <div class="p-8 md:p-12">
-                                <p class="text-zinc-500 text-sm font-medium mb-8 text-center uppercase tracking-widest">Princípios Norteadores</p>
+                            {/* Content Area */}
+                            <div class="p-10 md:p-14 bg-black/20">
+                                <div class="flex items-center gap-4 mb-10">
+                                    <hr class="flex-1 border-white/10" />
+                                    <span class="text-futuristic-textSec text-[10px] font-bold uppercase tracking-widest flex items-center gap-2">
+                                        <i class="fa-solid fa-map-location-dot"></i> Princípios Norteadores
+                                    </span>
+                                    <hr class="flex-1 border-white/10" />
+                                </div>
                                 
                                 <div class="space-y-6">
                                     {top3.map((p, idx) => (
-                                        <div key={p.id} class="group flex gap-4 p-5 rounded-2xl bg-zinc-50 hover:bg-zinc-100 transition-colors border border-transparent hover:border-zinc-200">
-                                            <div class="text-3xl font-black text-zinc-200 group-hover:text-zinc-300 transition-colors pt-1">
+                                        <div key={p.id} class="group flex gap-6 p-6 rounded-2xl bg-white/5 border border-white/10 hover:border-white/20 transition-all hover:bg-white/10 relative overflow-hidden">
+                                            <div class="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-futuristic-primary to-futuristic-secondary opacity-50 group-hover:opacity-100 transition-opacity"></div>
+                                            <div class="text-4xl font-black text-white/10 group-hover:text-white/20 transition-colors pt-1">
                                                 0{idx + 1}
                                             </div>
                                             <div class="flex-1">
-                                                <p class="text-lg text-zinc-800 font-semibold mb-2 leading-snug">{p.text}</p>
+                                                <p class="text-xl text-white font-semibold mb-3 leading-snug">{p.text}</p>
                                                 {p.scripture && (
-                                                    <p class="text-sm font-bold text-violet-600 mb-4">
-                                                        {p.scripture}
+                                                    <p class="text-sm font-bold text-futuristic-secondary mb-5 flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-book-bible text-[10px] opacity-70"></i> {p.scripture}
                                                     </p>
                                                 )}
                                                 
-                                                <div class="flex items-center gap-3">
-                                                    <span class={`text-[10px] uppercase font-bold tracking-widest px-2 py-1 rounded-md
-                                                        ${p.category === 'sim' ? 'bg-emerald-100 text-emerald-700' : 
-                                                          p.category === 'nao' ? 'bg-rose-100 text-rose-700' : 
-                                                          'bg-amber-100 text-amber-700'}`}>
+                                                <div class="flex items-center gap-4">
+                                                    <span class={`text-[9px] uppercase font-bold tracking-widest px-2.5 py-1 rounded-md border backdrop-blur-sm
+                                                        ${p.category === 'sim' ? 'bg-futuristic-success/10 text-futuristic-success border-futuristic-success/30' : 
+                                                          p.category === 'nao' ? 'bg-futuristic-danger/10 text-futuristic-danger border-futuristic-danger/30' : 
+                                                          'bg-futuristic-warning/10 text-futuristic-warning border-futuristic-warning/30'}`}>
                                                         {p.category}
                                                     </span>
-                                                    <span class="text-[10px] text-zinc-400 font-medium uppercase tracking-wide">
-                                                        Sugerido por {getTeamName(p.teamId)}
+                                                    <span class="text-[10px] text-white/40 font-semibold uppercase tracking-widest flex items-center gap-1.5">
+                                                        <i class="fa-solid fa-user-pen"></i> {getTeamName(p.teamId)}
                                                     </span>
                                                 </div>
                                             </div>
@@ -1061,36 +1528,39 @@
                                     ))}
                                 </div>
 
-                                <div class="mt-12 pt-8 border-t border-zinc-100 text-center flex flex-col items-center">
-                                    <div class="w-12 h-12 bg-zinc-50 text-zinc-400 rounded-full flex items-center justify-center text-xl mb-4">
-                                        <i class="fa-solid fa-camera"></i>
+                                <div class="mt-14 pt-8 border-t border-white/10 text-center flex flex-col items-center">
+                                    <div class="w-14 h-14 bg-white/5 border border-white/10 text-white/40 rounded-full flex items-center justify-center text-xl mb-5 shadow-inner-glow">
+                                        <i class="fa-solid fa-camera drop-shadow-md"></i>
                                     </div>
-                                    <p class="text-sm text-zinc-500 font-medium">Salve esta tela para lembrar da decisão de vocês.</p>
+                                    <p class="text-sm text-white/50 font-medium">Capture esta tela para documentar a decisão final.</p>
                                 </div>
                             </div>
                         </div>
 
                         {/* Bottom Actions */}
-                        <div class="mt-8 flex gap-4 animate-slide-up" style={{animationDelay: '0.2s'}}>
-                            <button 
-                                onClick={() => {
-                                    setGameState('setup_question');
-                                    setCurrentQuestion('');
-                                    setCurrentCategory(null);
-                                    setPrinciples([]);
-                                    setPrincipleText('');
-                                    setScriptureText('');
-                                    setSelectedTeamId('');
-                                }}
-                                class="bg-white border border-zinc-200 hover:border-zinc-300 text-zinc-600 hover:text-zinc-900 font-bold py-3 px-6 rounded-full shadow-sm transition-all active:scale-95 text-sm"
-                            >
-                                Nova Pergunta
-                            </button>
+                        <div class="mt-10 flex gap-5 animate-slide-up justify-center" style={{animationDelay: '0.2s'}}>
+                            {isHost && (
+                                <button 
+                                    onClick={() => {
+                                        syncUpdate({ 
+                                            gameState: 'setup_question', 
+                                            currentQuestion: '', 
+                                            currentCategory: null, 
+                                            principles: [], 
+                                            activePrinciple: null,
+                                            isTimerRunning: false
+                                        });
+                                    }}
+                                    class="bg-white/5 backdrop-blur-md border border-white/20 hover:bg-white/10 text-white font-bold py-4 px-8 rounded-full shadow-[0_0_15px_rgba(255,255,255,0.05)] transition-all active:scale-95 flex items-center gap-2"
+                                >
+                                    <i class="fa-solid fa-rotate-right"></i> Nova Pergunta
+                                </button>
+                            )}
                             <button 
                                 onClick={() => window.location.reload()}
-                                class="bg-zinc-100 hover:bg-zinc-200 text-zinc-600 hover:text-zinc-900 font-bold py-3 px-6 rounded-full transition-all active:scale-95 text-sm"
+                                class="btn-premium text-white font-bold py-4 px-8 rounded-full transition-all active:scale-95 shadow-glow-primary flex items-center gap-2"
                             >
-                                Encerrar
+                                <i class="fa-solid fa-power-off"></i> Sair da Sala
                             </button>
                         </div>
                     </div>
@@ -1098,18 +1568,22 @@
             };
 
             return (
-                <div class="relative antialiased">
+                <div class="relative antialiased selection:bg-futuristic-primary/30 selection:text-white">
                     {/* Floating Toast Notification */}
                     {message && (
-                        <div class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 animate-slide-up">
-                            <div class={`px-6 py-4 rounded-2xl shadow-float font-bold text-sm flex items-center gap-3 text-white border border-white/20 backdrop-blur-md
-                                ${message.type === 'error' ? 'bg-rose-500/90' : message.type === 'warning' ? 'bg-amber-500/90' : 'bg-emerald-500/90'}
+                        <div class="fixed top-8 left-1/2 transform -translate-x-1/2 z-50 animate-slide-up">
+                            <div class={`px-6 py-4 rounded-2xl shadow-float font-bold text-sm flex items-center gap-3 text-white border backdrop-blur-xl
+                                ${message.type === 'error' ? 'bg-futuristic-danger/20 border-futuristic-danger/50 shadow-glow-danger' : 
+                                  message.type === 'warning' ? 'bg-futuristic-warning/20 border-futuristic-warning/50' : 
+                                  'bg-futuristic-success/20 border-futuristic-success/50 shadow-glow-success'}
                             `}>
-                                <i class={`fa-solid ${message.type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}`}></i>
+                                <i class={`fa-solid text-lg ${message.type === 'error' ? 'fa-circle-exclamation' : 'fa-info-circle'}`}></i>
                                 {message.text}
                             </div>
                         </div>
                     )}
+                    
+                    <RoomBadge />
 
                     {/* Game State Router */}
                     {gameState === 'intro' && renderIntro()}
