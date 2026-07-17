@@ -637,7 +637,7 @@
                     const docSnap = await getDoc(roomRef);
                     if (docSnap.exists()) {
                         const roomData = docSnap.data();
-                        // Adiciona o jogador à lista se ainda não estiver
+                        // Adiciona o jogador à lista se ainda não estiver (usando o uid do jogador como id da equipe)
                         const existingTeams = roomData.teams || [];
                         const alreadyIn = existingTeams.some(t => t.id === userUid);
                         if (!alreadyIn) {
@@ -967,20 +967,33 @@
                                         </div>
                                     )}
 
-                            <div class="flex justify-between items-center mt-14 pt-8 border-t border-white/10">
-                                <div class="flex gap-4">
-                                    <button onClick={() => syncUpdate({ gameState: 'setup_teams' })} class="text-futuristic-textSec hover:text-white px-4 py-3 font-medium transition-colors flex items-center gap-2">
-                                        <i class="fa-solid fa-arrow-left text-sm"></i> Voltar
-                                    </button>
-                                    {history.length > 0 && (
-                                        <button onClick={() => setShowHistory(true)} class="text-futuristic-secondary hover:text-futuristic-primary px-4 py-3 font-bold text-[10px] tracking-widest uppercase transition-colors flex items-center gap-2 border border-white/10 hover:border-futuristic-primary/50 rounded-xl bg-white/5">
-                                            <i class="fa-solid fa-clock-rotate-left"></i> Histórico
-                                        </button>
+                                    {questionInputMode === 'custom' && (
+                                        <div class="animate-scale-in">
+                                            <textarea 
+                                                value={currentQuestion}
+                                                onChange={(e) => setCurrentQuestion(e.target.value)}
+                                                onBlur={handleQuestionBlur}
+                                                class="premium-input w-full rounded-3xl p-6 font-medium resize-none min-h-[160px] text-lg text-center"
+                                                placeholder="Digite aqui a pergunta que o grupo irá discutir..."
+                                            ></textarea>
+                                            <p class="text-xs text-futuristic-textSec mt-3 text-center">Para perguntas personalizadas, o assunto será "Personalizada" automaticamente.</p>
+                                        </div>
                                     )}
-                                </div>
-                                <button 
-                                    onClick={() => {
-                                        if (currentQuestion.trim().length < 5) {
+
+                                    <div class="flex justify-between items-center mt-14 pt-8 border-t border-white/10">
+                                        <div class="flex gap-4">
+                                            <button onClick={() => syncUpdate({ gameState: 'setup_teams' })} class="text-futuristic-textSec hover:text-white px-4 py-3 font-medium transition-colors flex items-center gap-2">
+                                                <i class="fa-solid fa-arrow-left text-sm"></i> Voltar
+                                            </button>
+                                            {history.length > 0 && (
+                                                <button onClick={() => setShowHistory(true)} class="text-futuristic-secondary hover:text-futuristic-primary px-4 py-3 font-bold text-[10px] tracking-widest uppercase transition-colors flex items-center gap-2 border border-white/10 hover:border-futuristic-primary/50 rounded-xl bg-white/5">
+                                                    <i class="fa-solid fa-clock-rotate-left"></i> Histórico
+                                                </button>
+                                            )}
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                if (currentQuestion.trim().length < 5) {
                                                     showMessage("Por favor, insira ou sorteie uma pergunta válida.");
                                                     return;
                                                 }
@@ -1011,12 +1024,21 @@
             };
 
             const renderBrainstorm = () => {
-                const currentSelectedTeam = selectedTeamId || (teams.length > 0 ? teams[0].id : '');
+                const isGuest = !isHost && inRoom;
+                const myTeam = isGuest ? teams.find(t => t.id === userUid) : null;
+                
+                const currentSelectedTeam = isGuest 
+                    ? (myTeam ? myTeam.id : '') 
+                    : (selectedTeamId || (teams.length > 0 ? teams[0].id : ''));
 
                 const handleAddPrinciple = (e) => {
                     e.preventDefault();
                     if (!principleText.trim()) {
                         showMessage("O texto do princípio é obrigatório.");
+                        return;
+                    }
+                    if (!currentSelectedTeam) {
+                        showMessage("Erro de identificação do participante.");
                         return;
                     }
                     
@@ -1035,9 +1057,11 @@
                     setPrincipleText('');
                     setScriptureText('');
                     
-                    const currentIndex = teams.findIndex(t => t.id === currentSelectedTeam);
-                    const nextIndex = (currentIndex + 1) % teams.length;
-                    setSelectedTeamId(teams[nextIndex].id);
+                    if (!isGuest) {
+                        const currentIndex = teams.findIndex(t => t.id === currentSelectedTeam);
+                        const nextIndex = (currentIndex + 1) % teams.length;
+                        setSelectedTeamId(teams[nextIndex].id);
+                    }
                 };
 
                 return (
@@ -1083,14 +1107,21 @@
                                         <div class="relative">
                                             <select 
                                                 value={currentSelectedTeam} 
-                                                onChange={(e) => setSelectedTeamId(e.target.value)}
-                                                class="premium-input w-full appearance-none rounded-2xl p-5 font-semibold cursor-pointer"
+                                                onChange={(e) => !isGuest && setSelectedTeamId(e.target.value)}
+                                                disabled={isGuest}
+                                                class={`premium-input w-full appearance-none rounded-2xl p-5 font-semibold ${isGuest ? 'cursor-not-allowed opacity-80' : 'cursor-pointer'}`}
                                             >
-                                                {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
+                                                {isGuest && myTeam ? (
+                                                    <option value={myTeam.id}>{myTeam.name} (Você)</option>
+                                                ) : (
+                                                    teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)
+                                                )}
                                             </select>
-                                            <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
-                                                <i class="fa-solid fa-chevron-down text-sm"></i>
-                                            </div>
+                                            {!isGuest && (
+                                                <div class="absolute right-5 top-1/2 -translate-y-1/2 pointer-events-none text-white/40">
+                                                    <i class="fa-solid fa-chevron-down text-sm"></i>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                     
@@ -1423,44 +1454,44 @@
                                     
                                     {isHost ? (
                                         <button 
-    onClick={async () => {
-        const currentResult = {
-            id: generateId(),
-            question: currentQuestion,
-            category: currentCategory,
-            date: Date.now(),
-            top3: principles.filter(p => p.isTop3)
-        };
-        
-        // 1. Atualiza a sala (para sincronizar o estado com outros jogadores)
-        syncUpdate({ 
-            gameState: 'result', 
-            history: [...principles.filter(p => p.isTop3)] 
-        });
-        
-        // 2. Salva na coleção global "decisions" de forma independente para consulta futura
-        if (window.firebaseDB) {
-            try {
-                const { doc, setDoc } = window.firebaseAPI;
-                // Cria um documento único na coleção 'decisions'
-                const decisionRef = doc(window.firebaseDB, 'decisions', currentResult.id);
-                await setDoc(decisionRef, {
-                    ...currentResult,
-                    roomId: roomId || 'local',
-                    hostId: userUid || 'anon'
-                });
-            } catch (e) {
-                console.error("Erro ao salvar decisão global:", e);
-                showMessage("Erro ao salvar no histórico global.", "error");
-            }
-        }
-    }}
-    disabled={top3Count === 0}
-    class={`py-6 rounded-2xl font-bold text-lg transition-all flex justify-center items-center gap-3
-        ${top3Count > 0 ? 'btn-premium text-white shadow-glow-primary active:scale-95' : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'}`}
->
-    Gerar Relatório Final e Salvar <i class="fa-solid fa-file-contract text-lg"></i>
-</button>
+                                            onClick={async () => {
+                                                const currentResult = {
+                                                    id: generateId(),
+                                                    question: currentQuestion,
+                                                    category: currentCategory,
+                                                    date: Date.now(),
+                                                    top3: principles.filter(p => p.isTop3)
+                                                };
+                                                
+                                                // 1. Atualiza a sala (para sincronizar o estado com outros jogadores)
+                                                syncUpdate({ 
+                                                    gameState: 'result', 
+                                                    history: [...history, currentResult] 
+                                                });
+                                                
+                                                // 2. Salva na coleção global "decisions" de forma independente para consulta futura
+                                                if (window.firebaseDB) {
+                                                    try {
+                                                        const { doc, setDoc } = window.firebaseAPI;
+                                                        // Cria um documento único na coleção 'decisions'
+                                                        const decisionRef = doc(window.firebaseDB, 'decisions', currentResult.id);
+                                                        await setDoc(decisionRef, {
+                                                            ...currentResult,
+                                                            roomId: roomId || 'local',
+                                                            hostId: userUid || 'anon'
+                                                        });
+                                                    } catch (e) {
+                                                        console.error("Erro ao salvar decisão global:", e);
+                                                        showMessage("Erro ao salvar no histórico global.", "error");
+                                                    }
+                                                }
+                                            }}
+                                            disabled={top3Count === 0}
+                                            class={`py-6 rounded-2xl font-bold text-lg transition-all flex justify-center items-center gap-3
+                                                ${top3Count > 0 ? 'btn-premium text-white shadow-glow-primary active:scale-95' : 'bg-white/5 text-white/30 cursor-not-allowed border border-white/10'}`}
+                                        >
+                                            Gerar Relatório Final e Salvar <i class="fa-solid fa-file-contract text-lg"></i>
+                                        </button>
                                     ) : (
                                         <div class="bg-black/20 border border-white/5 rounded-2xl py-6 flex flex-col items-center justify-center mt-auto shadow-inner">
                                             <i class="fa-solid fa-circle-notch fa-spin text-futuristic-primary mb-3 text-2xl"></i>
