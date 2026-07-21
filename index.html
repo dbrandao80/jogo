@@ -431,7 +431,7 @@
             
             // Estado do Jogo (Sincronizado)
             const [gameState, setGameState] = useState('intro');
-            const [teams, setTeams] = useState([{ id: generateId(), name: 'Equipe 1' }, { id: generateId(), name: 'Equipe 2' }]);
+            const [teams, setTeams] = useState([{ id: generateId(), name: 'Jogador 1' }]); // Alterado para 1 jogador
             const [currentQuestion, setCurrentQuestion] = useState('');
             const [currentCategory, setCurrentCategory] = useState(null);
             const [availableQuestions, setAvailableQuestions] = useState([...ALL_QUESTIONS]);
@@ -440,6 +440,7 @@
             const [timerEndsAt, setTimerEndsAt] = useState(null);
             const [isTimerRunning, setIsTimerRunning] = useState(false);
             const [activePrinciple, setActivePrinciple] = useState(null);
+            const [readyPlayers, setReadyPlayers] = useState([]); // NOVO ESTADO: Jogadores que terminaram
 
             // Estado de Histórico
             const [history, setHistory] = useState([]);
@@ -523,6 +524,7 @@
                         if (data.isTimerRunning !== undefined) setIsTimerRunning(data.isTimerRunning);
                         if (data.availableQuestions) setAvailableQuestions(data.availableQuestions);
                         if (data.history) setHistory(data.history);
+                        if (data.readyPlayers !== undefined) setReadyPlayers(data.readyPlayers); // Sincroniza quem terminou
                     } else {
                         // Sala foi excluída
                         setInRoom(false);
@@ -542,15 +544,20 @@
                     interval = setInterval(() => {
                         const remaining = Math.max(0, Math.floor((timerEndsAt - Date.now()) / 1000));
                         setLocalTimer(remaining);
+                        
                         if (remaining === 0) {
                             setIsTimerRunning(false); 
+                            // AVANÇO AUTOMÁTICO SE O TEMPO ACABAR E FOR O HOST
+                            if (gameState === 'brainstorm' && (!inRoom || roomHostUid === userUid)) {
+                                syncUpdate({ gameState: 'sorting', isTimerRunning: false, timer: 0 });
+                            }
                         }
                     }, 1000);
                 } else {
                     setLocalTimer(timer);
                 }
                 return () => clearInterval(interval);
-            }, [isTimerRunning, timerEndsAt, timer]);
+            }, [isTimerRunning, timerEndsAt, timer, gameState, inRoom, roomHostUid, userUid]); // Dependências atualizadas
 
             const formatTime = (seconds) => {
                 const m = Math.floor(seconds / 60);
@@ -573,6 +580,7 @@
                     if (updates.isTimerRunning !== undefined) setIsTimerRunning(updates.isTimerRunning);
                     if (updates.availableQuestions) setAvailableQuestions(updates.availableQuestions);
                     if (updates.history !== undefined) setHistory(updates.history);
+                    if (updates.readyPlayers !== undefined) setReadyPlayers(updates.readyPlayers); // Offline fallback
                     return;
                 }
                 
@@ -607,7 +615,7 @@
                     await setDoc(roomRef, {
                         host: userUid,
                         gameState: 'setup_teams',
-                        teams: [{ id: generateId(), name: 'Equipe 1' }, { id: generateId(), name: 'Equipe 2' }],
+                        teams: [{ id: generateId(), name: 'Jogador 1' }], // Alterado no banco também
                         currentQuestion: '',
                         currentCategory: null,
                         availableQuestions: ALL_QUESTIONS,
@@ -615,7 +623,8 @@
                         timer: 180,
                         isTimerRunning: false,
                         activePrinciple: null,
-                        history: []
+                        history: [],
+                        readyPlayers: [] // Inicia lista vazia
                     });
                     setRoomId(newRoomId);
                     setInRoom(true);
@@ -759,10 +768,10 @@
             const renderSetupTeams = () => {
                 const addTeam = () => {
                     if (teams.length >= 6) {
-                        showMessage("Máximo de 6 equipes atingido.");
+                        showMessage("Máximo de 6 participantes atingido.");
                         return;
                     }
-                    const newTeams = [...teams, { id: generateId(), name: `Equipe ${teams.length + 1}` }];
+                    const newTeams = [...teams, { id: generateId(), name: `Jogador ${teams.length + 1}` }]; // Alterado
                     setTeams(newTeams); // Update local fast
                     syncUpdate({ teams: newTeams }); // Sync
                 };
@@ -776,8 +785,8 @@
                 };
 
                 const removeTeam = (id) => {
-                    if (teams.length <= 2) {
-                        showMessage("Mínimo de 2 equipes necessário.");
+                    if (teams.length <= 1) { // Alterado de 2 para 1
+                        showMessage("Mínimo de 1 jogador necessário.");
                         return;
                     }
                     const newTeams = teams.filter(t => t.id !== id);
@@ -1003,7 +1012,8 @@
                                                     timer: 180, 
                                                     isTimerRunning: true, 
                                                     timerEndsAt: Date.now() + 180 * 1000,
-                                                    currentQuestion 
+                                                    currentQuestion,
+                                                    readyPlayers: [] // Zera a lista de quem terminou ao iniciar
                                                 });
                                             }}
                                             class="bg-white text-futuristic-bg px-10 py-4 rounded-2xl font-bold transition-all hover:bg-gray-200 active:scale-95 shadow-glow flex items-center gap-3 text-lg"
@@ -1027,12 +1037,18 @@
                 const isGuest = !isHost && inRoom;
                 const myTeam = isGuest ? teams.find(t => t.id === userUid) : null;
                 
-                const currentSelectedTeam = isGuest 
-                    ? (myTeam ? myTeam.id : '') 
+                // Força a seleção para o convidado
+                const currentSelectedTeam = isGuest && myTeam 
+                    ? myTeam.id 
                     : (selectedTeamId || (teams.length > 0 ? teams[0].id : ''));
+
+                // Verifica se este usuário já clicou em pronto
+                const isReady = readyPlayers.includes(currentSelectedTeam);
 
                 const handleAddPrinciple = (e) => {
                     e.preventDefault();
+                    if (isReady) return; // Trava o envio se já estiver pronto
+
                     if (!principleText.trim()) {
                         showMessage("O texto do princípio é obrigatório.");
                         return;
@@ -1062,6 +1078,17 @@
                         const nextIndex = (currentIndex + 1) % teams.length;
                         setSelectedTeamId(teams[nextIndex].id);
                     }
+                };
+
+                const toggleReady = () => {
+                    if (!currentSelectedTeam) return;
+                    let newReadyPlayers;
+                    if (isReady) {
+                        newReadyPlayers = readyPlayers.filter(id => id !== currentSelectedTeam);
+                    } else {
+                        newReadyPlayers = [...readyPlayers, currentSelectedTeam];
+                    }
+                    syncUpdate({ readyPlayers: newReadyPlayers });
                 };
 
                 return (
@@ -1130,7 +1157,8 @@
                                         <textarea 
                                             value={principleText}
                                             onChange={(e) => setPrincipleText(e.target.value)}
-                                            class="premium-input w-full rounded-3xl p-6 font-medium resize-none min-h-[140px] text-lg"
+                                            disabled={isReady}
+                                            class={`premium-input w-full rounded-3xl p-6 font-medium resize-none min-h-[140px] text-lg ${isReady ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             placeholder="Ex: Más companhias estragam bons hábitos."
                                         ></textarea>
                                     </div>
@@ -1141,13 +1169,31 @@
                                             type="text"
                                             value={scriptureText}
                                             onChange={(e) => setScriptureText(e.target.value)}
-                                            class="premium-input w-full rounded-2xl p-5 font-medium"
+                                            disabled={isReady}
+                                            class={`premium-input w-full rounded-2xl p-5 font-medium ${isReady ? 'opacity-50 cursor-not-allowed' : ''}`}
                                             placeholder="Ex: 1 Coríntios 15:33"
                                         />
                                     </div>
 
-                                    <button type="submit" class="w-full bg-white/5 border border-white/10 hover:bg-white/10 hover:border-futuristic-primary text-white font-bold py-5 rounded-2xl transition-all active:scale-95 mt-6 shadow-sm flex items-center justify-center gap-3">
+                                    <button type="submit" disabled={isReady} class={`w-full font-bold py-5 rounded-2xl transition-all mt-6 shadow-sm flex items-center justify-center gap-3 ${isReady ? 'bg-white/5 text-white/30 cursor-not-allowed border border-white/5' : 'bg-white/5 border border-white/10 hover:bg-white/10 hover:border-futuristic-primary text-white active:scale-95'}`}>
                                         Adicionar à Pilha <i class="fa-solid fa-layer-group text-futuristic-secondary"></i>
+                                    </button>
+
+                                    {/* Botão de Terminei (Aparece para convidados ou no modo local se quiserem travar) */}
+                                    <button 
+                                        type="button" 
+                                        onClick={toggleReady}
+                                        class={`w-full py-4 rounded-2xl font-bold transition-all shadow-sm flex items-center justify-center gap-3 mt-4 border
+                                            ${isReady 
+                                                ? 'bg-futuristic-success/20 text-futuristic-success border-futuristic-success/30 hover:bg-futuristic-success/30' 
+                                                : 'bg-white/5 text-white border-white/10 hover:bg-white/10'
+                                            }`}
+                                    >
+                                        {isReady ? (
+                                            <><i class="fa-solid fa-check-double"></i> Concluído (Clique para editar)</>
+                                        ) : (
+                                            <><i class="fa-solid fa-flag-checkered text-futuristic-warning"></i> Terminei as Respostas</>
+                                        )}
                                     </button>
                                 </form>
                             </div>
@@ -1171,6 +1217,29 @@
                                         </div>
                                         <p class="text-futuristic-textSec mb-8 font-medium leading-relaxed">Pensem na maior quantidade possível de princípios relacionados antes de organizar.</p>
                                     </div>
+                                    
+                                    {/* Lista de Status dos Jogadores para o Host */}
+                                    {inRoom && isHost && teams.length > 1 && (
+                                        <div class="mb-8 border-t border-white/10 pt-6">
+                                            <h4 class="text-[10px] font-bold text-futuristic-textSec uppercase tracking-widest mb-4">Status da Equipe</h4>
+                                            <div class="space-y-2 text-left">
+                                                {teams.filter(t => t.id !== userUid).map(t => {
+                                                    const isPlayerReady = readyPlayers.includes(t.id);
+                                                    return (
+                                                        <div key={t.id} class="flex items-center justify-between bg-white/5 border border-white/5 rounded-xl px-4 py-2.5">
+                                                            <span class="text-sm font-medium text-white/80">{t.name}</span>
+                                                            {isPlayerReady ? (
+                                                                <span class="text-futuristic-success text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5"><i class="fa-solid fa-check"></i> Pronto</span>
+                                                            ) : (
+                                                                <span class="text-futuristic-warning text-[10px] uppercase font-bold tracking-widest flex items-center gap-1.5 opacity-70"><i class="fa-solid fa-pen-nib"></i> Escrevendo</span>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {isHost ? (
                                         <button 
                                             onClick={() => {
